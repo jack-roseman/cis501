@@ -129,7 +129,7 @@ module lc4_processor (input  wire        clk,                // Main clock
         // pc wires attached to the PC register's ports
         wire [15:0] F_pc, F_pc_plus_one, D_pc, X_pc, X_pc_plus_one, next_pc; //defaults to pc+1
 
-        wire[15:0] F_data, D_data, X_data, M_data, W_data;
+        wire[15:0] D_data, X_data, M_data, W_data;
    
         wire[1:0] dd_stall, xx_stall, mm_stall, ww_stall;
 
@@ -174,45 +174,33 @@ module lc4_processor (input  wire        clk,                // Main clock
                         .is_load(F_bus[3]), .is_store(F_bus[2]), 
                         .is_branch(F_bus[1]), .is_control_insn(F_bus[0]));
 
-        Nbit_reg #(3, 3'b0) D_rs_reg(.in(F_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                     .out(D_rs));
-        Nbit_reg #(3, 3'b0) X_rs_reg(.in(D_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                     .out(X_rs));
-        Nbit_reg #(3, 3'b0) M_rs_reg(.in(X_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
-                                     .out(M_rs));
-        Nbit_reg #(3, 3'b0) W_rs_reg(.in(M_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
-                                     .out(W_rs));
+        Nbit_reg #(3, 3'b0) D_rs_reg(.in(F_rs), .out(D_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(3, 3'b0) X_rs_reg(.in(D_rs), .out(X_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(3, 3'b0) M_rs_reg(.in(X_rs), .out(M_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(3, 3'b0) W_rs_reg(.in(M_rs), .out(W_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
-        Nbit_reg #(3, 3'b0) D_rt_reg(.in(F_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                     .out(D_rt));
-        Nbit_reg #(3, 3'b0) X_rt_reg(.in(D_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                     .out(X_rt));
-        Nbit_reg #(3, 3'b0) M_rt_reg(.in(X_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
-                                     .out(M_rt));
-        Nbit_reg #(3, 3'b0) W_rt_reg(.in(M_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
-                                     .out(W_rt));
+        Nbit_reg #(3, 3'b0) D_rt_reg(.in(F_rt), .out(D_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(3, 3'b0) X_rt_reg(.in(D_rt), .out(X_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(3, 3'b0) M_rt_reg(.in(X_rt), .out(M_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(3, 3'b0) W_rt_reg(.in(M_rt), .out(W_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
         
-        Nbit_reg #(3, 3'b0) D_rd_reg(.in(F_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                     .out(D_rd));
-        Nbit_reg #(3, 3'b0) X_rd_reg(.in(D_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                     .out(X_rd));
-        Nbit_reg #(3, 3'b0) M_rd_reg(.in(X_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),                 
-                                     .out(M_rd));
-        Nbit_reg #(3, 3'b0) W_rd_reg(.in(M_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),                 
-                                     .out(W_rd));
+        Nbit_reg #(3, 3'b0) D_rd_reg(.in(F_rd), .out(D_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(3, 3'b0) X_rd_reg(.in(D_rd), .out(X_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(3, 3'b0) M_rd_reg(.in(X_rd), .out(M_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(3, 3'b0) W_rd_reg(.in(M_rd), .out(W_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
         //REGISTER FILE
         lc4_regfile registerfile(.clk(clk), .gwe(gwe), .rst(rst),
                                  .i_rs(W_rs),        .i_rt(W_rt),        .i_rd(rd),
                                  .o_rs_data(rsdata), .o_rt_data(rtdata), .i_wdata(rddata), .i_rd_we(W_regfile_we));  
 
-        Nbit_reg #(16, 16'b0) X_A_reg(.in(rsdata), .clk(clk), .we(X_rs_re), .gwe(gwe), .rst(should_flush || rst), .out(X_A_out)); //Holds rsdata that comes out of register file
-        Nbit_reg #(16, 16'b0) M_O_reg(.in(alu_result), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), .out(M_O_out)); //Holds dmem data
-        Nbit_reg #(16, 16'b0) W_O_register(.in(M_O_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_O_out));
+        Nbit_reg #(16, 16'b0) X_A_reg(     .in(rsdata),     .out(X_A_out), .clk(clk), .we(X_rs_re), .gwe(gwe), .rst(should_flush || rst)); //Holds rsdata that comes out of register file
+        Nbit_reg #(16, 16'b0) M_O_reg(     .in(alu_result), .out(M_O_out), .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || rst)); //Holds dmem data
+        Nbit_reg #(16, 16'b0) W_O_register(.in(M_O_out),    .out(W_O_out), .clk(clk), .we(1'b1),    .gwe(gwe), .rst(rst));
         
-        Nbit_reg #(16, 16'b0) X_B_reg(.in(rtdata), .clk(clk), .we(X_rt_re), .gwe(gwe), .rst(should_flush || rst), .out(X_B_out)); //Holds rtdata that comes out of register file
-        Nbit_reg #(16, 16'b0) M_B_reg(.in(i_alu_r2data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), .out(M_B_out)); //Holds dmem address
-        Nbit_reg #(16, 16'b0) W_D_register(.in(M_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_D_out));
+        Nbit_reg #(16, 16'b0) X_B_reg(     .in(rtdata),       .out(X_B_out), .clk(clk), .we(X_rt_re), .gwe(gwe), .rst(should_flush || rst)); //Holds rtdata that comes out of register file
+        Nbit_reg #(16, 16'b0) M_B_reg(     .in(i_alu_r2data), .out(M_B_out), .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || rst)); //Holds dmem address
+        Nbit_reg #(16, 16'b0) W_D_register(.in(M_data),       .out(W_D_out), .clk(clk), .we(1'b1),    .gwe(gwe), .rst(rst));
 
         //A_bypass_sel values: 0 -> MX bypass, 1 -> WX bypass, otherwise no bypass (comes straight from X_A_reg)
         //B_bypass_sel values: 0 -> MX bypass, 1 -> WX bypass, otherwise no bypass (comes straight from X_B_reg)
@@ -220,17 +208,12 @@ module lc4_processor (input  wire        clk,                // Main clock
         assign i_alu_r2data = B_bypass_sel == 2'b00 ? M_O_out : (B_bypass_sel == 2'b01 ? rddata : X_B_out);
         lc4_alu alu (.i_insn(X_insn_out), .i_pc(X_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
-        Nbit_reg #(9, 9'b0) D_bus_reg(.in(F_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),
-                                      .out(D_bus));
-        Nbit_reg #(9, 9'b0) X_bus_reg(.in(D_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                      .out(X_bus));
-        Nbit_reg #(9, 9'b0) M_bus_reg(.in(X_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
-                                      .out(M_bus));
-        Nbit_reg #(9, 9'b0) W_bus_reg(.in(M_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),             
-                                      .out(W_bus));
+        Nbit_reg #(9, 9'b0) D_bus_reg(.in(F_bus), .out(D_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(9, 9'b0) X_bus_reg(.in(D_bus), .out(X_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(9, 9'b0) M_bus_reg(.in(X_bus), .out(M_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(9, 9'b0) W_bus_reg(.in(M_bus), .out(W_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
-        Nbit_reg #(16, 16'b0) F_data_reg(.in(i_cur_dmem_data), .out(F_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-        Nbit_reg #(16, 16'b0) D_data_reg(.in(F_data),          .out(D_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(16, 16'b0) D_data_reg(.in(i_cur_dmem_data),          .out(D_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
         Nbit_reg #(16, 16'b0) X_data_reg(.in(D_data),          .out(X_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
         Nbit_reg #(16, 16'b0) M_data_reg(.in(X_data),          .out(M_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
         Nbit_reg #(16, 16'b0) W_data_reg(.in(M_data),          .out(W_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
