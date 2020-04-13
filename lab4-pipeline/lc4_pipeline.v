@@ -44,167 +44,234 @@ module lc4_processor (input  wire        clk,                // Main clock
     output wire [7:0]  led_data            // Which Zedboard LEDs should be turned on?
     );
 
-   // By default, assign LEDs to display switch inputs to avoid warnings about
-   // disconnected ports. Feel free to use this for debugging input/output if
-   // you desire.
-   assign led_data = switch_data;
+        // By default, assign LEDs to display switch inputs to avoid warnings about
+        // disconnected ports. Feel free to use this for debugging input/output if
+        // you desire.
+        assign led_data = switch_data;
 
-   wire [2:0] nzp_in;
-   wire [2:0] nzp; //nzp bits
-   wire [2:0] rd;
-   wire is_flush;
+        wire [2:0] nzp_in, nzp;
+        wire [2:0] rd;
+        wire [1:0] hazard;
+        wire should_stall;
+        wire should_flush;
 
-   wire[15:0] D_insn_in, D_insn_out, X_insn_in, X_insn_out, M_insn_in, M_insn_out, W_insn_in, W_insn_out, X_insn_sext;
-   wire[15:0] rsdata, X_A_out, rtdata, X_B_out, M_O_in, M_O_out, M_B_in, M_B_out, W_O_in, W_O_out, W_D_in, W_D_out, rddata;
-   wire [15:0] i_alu_r1data, i_alu_r2data; //inputs to ALU 
-   wire[1:0] A_bypass_sel, B_bypass_sel; //assigned by bypass logic module
-   wire WO_WD_sel, rddata_MB_sel, SX_B_sel; //assigned by bypass logic module
-   wire[1:0] stall; //assigned by stall logic module
+        wire[15:0] D_insn_in, D_insn_out, X_insn_in, X_insn_out, M_insn_in, M_insn_out, W_insn_in, W_insn_out, X_insn_sext, alu_result;
+        wire[15:0] rsdata, X_A_out, rtdata, X_B_out, M_O_out, M_B_out, W_O_out, W_D_in, W_D_out, rddata;
+        wire [15:0] i_alu_r1data, i_alu_r2data; //inputs to ALU 
+        wire[1:0] A_bypass_sel, B_bypass_sel; //assigned by bypass logic module
+        wire rddata_MB_sel, SX_B_sel; //assigned by bypass logic module
 
-   //rs in [2:0], rt in [5:3], rd in [8:6]
-   wire[8:0] d_rs_rt_rd;
-   wire[8:0] x_rs_rt_rd;
-   wire[8:0] m_rs_rt_rd;
-   wire[8:0] w_rs_rt_rd;
-   wire[8:0] f_rs_rt_rd;
+        wire[2:0] F_rs, F_rt, F_rd;
+        wire[2:0] D_rs, D_rt, D_rd;
+        wire[2:0] X_rs, X_rt, X_rd;
+        wire[2:0] M_rs, M_rt, M_rd;
+        wire[2:0] W_rs, W_rt, W_rd;
 
-   //rsre (8), rtre (7), regfilewe (6), nzpwe (5), selectpcplusone (4), isload (3), isstore (2), isbranch (1), iscontrolinsn (0)
-   wire [8:0] d_bus;
-   wire [8:0] x_bus;
-   wire [8:0] m_bus;
-   wire [8:0] w_bus;
-   wire [8:0] f_bus;
+        wire F_rs_re, F_rt_re, F_regfile_we, F_nzp_we, F_select_pc_plus_one, F_is_load, F_is_store, F_is_branch, F_is_control_insn;
+        wire D_rs_re, D_rt_re, D_regfile_we, D_nzp_we, D_select_pc_plus_one, D_is_load, D_is_store, D_is_branch, D_is_control_insn;
+        wire X_rs_re, X_rt_re, X_regfile_we, X_nzp_we, X_select_pc_plus_one, X_is_load, X_is_store, X_is_branch, X_is_control_insn;
+        wire M_rs_re, M_rt_re, M_regfile_we, M_nzp_we, M_select_pc_plus_one, M_is_load, M_is_store, M_is_branch, M_is_control_insn;
+        wire W_rs_re, W_rt_re, W_regfile_we, W_nzp_we, W_select_pc_plus_one, W_is_load, W_is_store, W_is_branch, W_is_control_insn;
+        //rsre (8), rtre (7), regfilewe (6), nzpwe (5), selectpcplusone (4), isload (3), isstore (2), isbranch (1), iscontrolinsn (0)
 
-   // pc wires attached to the PC register's ports
-   wire [15:0] f_pc;      // Current program counter (read out from pc_reg)
-   wire [15:0] d_pc; //defaults to pc+1
-   wire [15:0] x_pc, x_pc_plus_one;
-   wire [15:0] next_pc;
+        wire [8:0] F_bus, D_bus, X_bus, M_bus, W_bus;
 
-   wire[15:0] D_data, X_data, M_data, W_data;
+        assign F_rs_re =              F_bus[8];
+        assign F_rt_re =              F_bus[7];
+        assign F_regfile_we =         F_bus[6];
+        assign F_nzp_we =             F_bus[5];
+        assign F_select_pc_plus_one = F_bus[4];
+        assign F_is_load =            F_bus[3];
+        assign F_is_store =           F_bus[2];
+        assign F_is_branch =          F_bus[1];
+        assign F_is_control_insn =    F_bus[0];
+
+        assign D_rs_re =              D_bus[8];
+        assign D_rt_re =              D_bus[7];
+        assign D_regfile_we =         D_bus[6];
+        assign D_nzp_we =             D_bus[5];
+        assign D_select_pc_plus_one = D_bus[4];
+        assign D_is_load =            D_bus[3];
+        assign D_is_store =           D_bus[2];
+        assign D_is_branch =          D_bus[1];
+        assign D_is_control_insn =    D_bus[0];
+
+        assign X_rs_re =              X_bus[8];
+        assign X_rt_re =              X_bus[7];
+        assign X_regfile_we =         X_bus[6];
+        assign X_nzp_we =             X_bus[5];
+        assign X_select_pc_plus_one = X_bus[4];
+        assign X_is_load =            X_bus[3];
+        assign X_is_store =           X_bus[2];
+        assign X_is_branch =          X_bus[1];
+        assign X_is_control_insn =    X_bus[0];
+
+        assign M_rs_re =              M_bus[8];
+        assign M_rt_re =              M_bus[7];
+        assign M_regfile_we =         M_bus[6];
+        assign M_nzp_we =             M_bus[5];
+        assign M_select_pc_plus_one = M_bus[4];
+        assign M_is_load =            M_bus[3];
+        assign M_is_store =           M_bus[2];
+        assign M_is_branch =          M_bus[1];
+        assign M_is_control_insn =    M_bus[0];
+
+        assign W_rs_re =              W_bus[8];
+        assign W_rt_re =              W_bus[7];
+        assign W_regfile_we =         W_bus[6];
+        assign W_nzp_we =             W_bus[5];
+        assign W_select_pc_plus_one = W_bus[4];
+        assign W_is_load =            W_bus[3];
+        assign W_is_store =           W_bus[2];
+        assign W_is_branch =          W_bus[1];
+        assign W_is_control_insn =    W_bus[0];
+
+        // pc wires attached to the PC register's ports
+        wire [15:0] F_pc, F_pc_plus_one, D_pc, X_pc, X_pc_plus_one, next_pc; //defaults to pc+1
+
+        wire[15:0] F_data, D_data, X_data, M_data, W_data;
    
-   wire[1:0] dd_stall, xx_stall, mm_stall, ww_stall;
+        wire[1:0] dd_stall, xx_stall, mm_stall, ww_stall;
 
-   // Program counter register, starts at 8200h at bootup
-   Nbit_reg #(16, 16'h8200) F_pc_reg (.in(next_pc), .out(f_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst || ww_stall == 2'b10));
-   cla16 plusone(.a(f_pc), .b(16'b0), .cin(1'b1), .sum(next_pc)); //assume the next instruction for the current decoded insn is pc + 1
+        // Program counter register, starts at 8200h at bootup
+        Nbit_reg #(16, 16'h8200) F_pc_reg (.in(next_pc), .out(F_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst || ww_stall == 2'b10));
+        Nbit_reg #(16, 16'b0)    D_pc_reg (.in(F_pc), .out(D_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(16, 16'b0)    X_pc_reg (.in(D_pc), .out(X_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
 
-   //PIPELINE STARTS HERE	
-   cla16 x_incr(.a(x_pc), .b(16'b0), .cin(1'b1), .sum(x_pc_plus_one)); //assume the next instruction for the current decoded insn is pc + 1
-   data_hazard stall_logic(.xis_load(x_bus[3]), .dis_store(d_bus[2]), .x_isbranch(x_bus[1]), .dr1(d_rs_rt_rd[2:0]), .i_x_pc_plus_one(x_pc_plus_one), .alu_out(M_O_in), 
-				.dr2(d_rs_rt_rd[5:3]), .xw(d_rs_rt_rd[8:6]), .o_stall(stall));
-   
-   assign A_bypass_sel = m_rs_rt_rd[8:6] == x_rs_rt_rd[2:0] ? 2'b10 : (w_rs_rt_rd[8:6] == x_rs_rt_rd[2:0] ? 2'b01 : 2'b00);
-   assign B_bypass_sel = m_rs_rt_rd[8:6] == x_rs_rt_rd[5:3] ? 2'b10 : (w_rs_rt_rd[8:6] == x_rs_rt_rd[5:3] ? 2'b01 : 2'b00);
-   assign WO_WD_sel = w_bus[3];
-   assign rddata_MB_sel = (w_bus[3] && m_bus[2]) && (w_rs_rt_rd[8:6] == m_rs_rt_rd[5:3]);
-   assign SX_B_sel = 1'b0;
+        cla16 f_pc_plus_one(.a(F_pc), .b(16'b0), .cin(1'b1), .sum(F_pc_plus_one)); //assume the next instruction for the current decoded insn is pc + 1
 
-   assign is_flush = xx_stall == 2'b10;
-
-   //BEGIN DECODE STAGE
-   assign nzp_in[2] = rddata[15];
-   assign nzp_in[1] = &(~rddata);
-   assign nzp_in[0] = ~rddata[15] && (|rddata);
-   Nbit_reg #(3) nzpreg(.in(nzp_in), .out(nzp), .clk(clk), .we(d_bus[5]), .gwe(gwe), .rst(rst));
-   //if stall == 2'b11 we want to write back in the instruction otherwise read in the current instruction
-   Nbit_reg #(16, 16'b0) D_insn_reg(.in(stall == 2'b11 ? D_insn_out : i_cur_insn), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(D_insn_out));
-   
-   lc4_decoder dec(.insn(stall == 2'b11 ? D_insn_out : i_cur_insn), .r1sel(f_rs_rt_rd[2:0]), .r1re(f_bus[8]),
-           .r2sel(f_rs_rt_rd[5:3]), .r2re(f_bus[7]), .wsel(f_rs_rt_rd[8:6]), .regfile_we(f_bus[6]),
-           .nzp_we(f_bus[5]), .select_pc_plus_one(f_bus[4]), .is_load(f_bus[3]),
-           .is_store(f_bus[2]), .is_branch(f_bus[1]), .is_control_insn(f_bus[0]));
+        cla16 x_pc_plus_one(.a(X_pc), .b(16'b0), .cin(1'b1), .sum(X_pc_plus_one)); //assume the next instruction for the current decoded insn is X_pc + 1
+        
+        wire is_load_to_use = X_is_load && (D_rs == D_rd || (~D_is_store && D_rt == D_rd));	
+	wire superscalar = 1'b0;
+	wire flush = (X_is_branch && ~(X_pc_plus_one == alu_result)); //case in which we flush
+	assign hazard = is_load_to_use ? 2'b11 : (superscalar ? 2'b01 : (flush ? 2'b10 : 2'b00));
 
 
-   Nbit_reg #(9, 9'b0) D_rs_rt_rd_reg(.in(f_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(d_rs_rt_rd));
-   Nbit_reg #(16, 16'b0) D_pc_reg (.in(f_pc), .out(d_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-   Nbit_reg #(9, 9'b0) D_bus_reg(.in(f_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(d_bus));
-   Nbit_reg #(2, 2'b10) D_stall(.in(stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(dd_stall));
-   Nbit_reg #(16, 16'b0) D_data_reg(.in(i_cur_dmem_data), .out(D_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-   //END DECODE STAGE
+        assign A_bypass_sel = M_rd == X_rs ? 2'b10 : (W_rd == X_rs ? 2'b01 : 2'b00);
+        assign B_bypass_sel = M_rd == X_rt ? 2'b10 : (W_rd == X_rt ? 2'b01 : 2'b00);
+        assign rddata_MB_sel = (W_is_load && M_is_store) && (W_rd == M_rt);
+        assign SX_B_sel = 1'b0;
 
+        assign should_flush = hazard == 2'b10;
+        assign should_stall = xx_stall;
 
+        assign D_insn_in = should_stall ? D_insn_out : i_cur_insn;
+        assign X_insn_in = should_stall ? 16'b0  : D_insn_out; //if data_hazard module returns 2'b11 then we pass nop to execute in order to stall
 
-   //BEGIN EXECUTE STAGE
-   assign X_insn_in = stall == 2'b11 || stall == 2'b10 ? 16'b0  : D_insn_out; //if data_hazard module returns 2'b11 then we pass nop to execute in order to stall
-   
-   lc4_regfile registerfile(.clk(clk), .gwe(gwe), .rst(rst),
-           .i_rs(w_rs_rt_rd[2:0]), .o_rs_data(rsdata), .i_rt(w_rs_rt_rd[5:3]),
-           .o_rt_data(rtdata), .i_rd(rd), .i_wdata(rddata), .i_rd_we(w_bus[6]));  
+        Nbit_reg #(16, 16'b0) D_insn_reg(.in(D_insn_in),  .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),                 .out(D_insn_out));
+        Nbit_reg #(16, 16'b0) X_insn_reg(.in(X_insn_in),  .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), .out(X_insn_out));
+        Nbit_reg #(16, 16'b0) M_insn_reg(.in(X_insn_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), .out(M_insn_out));
+        Nbit_reg #(16, 16'b0) W_insn_reg(.in(M_insn_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),                 .out(W_insn_out));
 
-   Nbit_reg #(16, 16'b0) X_insn_reg(.in(X_insn_in), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(X_insn_out)); 
-   Nbit_reg #(16, 16'b0) X_A_reg(.in(rsdata), .clk(clk), .we(x_bus[8]), .gwe(gwe), .rst(is_flush || rst), .out(X_A_out)); //Holds rsdata that comes out of register file
-   Nbit_reg #(16, 16'b0) X_B_reg(.in(rtdata), .clk(clk), .we(x_bus[7]), .gwe(gwe), .rst(is_flush || rst), .out(X_B_out)); //Holds rtdata that comes out of register file
-   Nbit_reg #(9, 9'b0) X_rs_rt_rd_reg(.in(d_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(x_rs_rt_rd));
-   Nbit_reg #(9, 9'b0) X_bus_reg(.in(d_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(x_bus));
-   Nbit_reg #(16, 16'b0) X_pc_reg (.in(d_pc), .out(x_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst));
-   //i_alu_r1data and i_alu_r2data are assigned values in the beinning of the memory stage in order to evaluate bypassing and wired to ALU below
-   lc4_alu alu (.i_insn(X_insn_in), .i_pc(x_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(M_O_in)); //ALU
-  
-   Nbit_reg #(2, 2'b10) X_stall(.in(dd_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(xx_stall));
+        Nbit_reg #(3) nzpreg(.in(nzp_in), .out(nzp), .clk(clk), .we(X_nzp_we), .gwe(gwe), .rst(rst)); //TODO - is we correct?
+        
+        lc4_decoder dec(.insn(D_insn_in), 
+                        .r1sel(F_rs), .r1re(F_bus[8]),
+                        .r2sel(F_rt), .r2re(F_bus[7]), 
+                        .wsel(F_rd), .regfile_we(F_bus[6]),
+                        .nzp_we(F_bus[5]), .select_pc_plus_one(F_bus[4]), 
+                        .is_load(F_bus[3]), .is_store(F_bus[2]), 
+                        .is_branch(F_bus[1]), .is_control_insn(F_bus[0]));
 
-   Nbit_reg #(16, 16'b0) X_data_reg(.in(D_data), .out(X_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst));
-   //END EXECUTE STAGE
+        Nbit_reg #(3, 3'b0) D_rs_reg(.in(F_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                     .out(D_rs));
+        Nbit_reg #(3, 3'b0) X_rs_reg(.in(D_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                     .out(X_rs));
+        Nbit_reg #(3, 3'b0) M_rs_reg(.in(X_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
+                                     .out(M_rs));
+        Nbit_reg #(3, 3'b0) W_rs_reg(.in(M_rs), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
+                                     .out(W_rs));
 
+        Nbit_reg #(3, 3'b0) D_rt_reg(.in(F_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                     .out(D_rt));
+        Nbit_reg #(3, 3'b0) X_rt_reg(.in(D_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                     .out(X_rt));
+        Nbit_reg #(3, 3'b0) M_rt_reg(.in(X_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
+                                     .out(M_rt));
+        Nbit_reg #(3, 3'b0) W_rt_reg(.in(M_rt), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), 
+                                     .out(W_rt));
+        
+        Nbit_reg #(3, 3'b0) D_rd_reg(.in(F_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                     .out(D_rd));
+        Nbit_reg #(3, 3'b0) X_rd_reg(.in(D_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                     .out(X_rd));
+        Nbit_reg #(3, 3'b0) M_rd_reg(.in(X_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),                 
+                                     .out(M_rd));
+        Nbit_reg #(3, 3'b0) W_rd_reg(.in(M_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),                 
+                                     .out(W_rd));
 
+        //REGISTER FILE
+        lc4_regfile registerfile(.clk(clk), .gwe(gwe), .rst(rst),
+                                 .i_rs(W_rs),        .i_rt(W_rt),        .i_rd(rd),
+                                 .o_rs_data(rsdata), .o_rt_data(rtdata), .i_wdata(rddata), .i_rd_we(W_regfile_we));  
 
-   //BEGIN MEMORY STAGE
-   //B_bypass_sel values: 0 -> MX bypass, 1 -> WX bypass, otherwise no bypass (comes straight from X_B_reg)
-   wire [15:0] B_tmp = B_bypass_sel == 2'b00 ? M_O_out : (B_bypass_sel == 2'b01 ? rddata : X_B_out);
-   //A_bypass_sel values: 0 -> MX bypass, 1 -> WX bypass, otherwise no bypass (comes straight from X_A_reg)
-   assign i_alu_r1data = A_bypass_sel == 2'b00 ? M_O_out : (A_bypass_sel == 2'b01 ? rddata : X_A_out);
-   assign i_alu_r2data = B_tmp;
-   assign M_B_in = i_alu_r2data;
+        Nbit_reg #(16, 16'b0) X_A_reg(.in(rsdata), .clk(clk), .we(X_rs_re), .gwe(gwe), .rst(should_flush || rst), .out(X_A_out)); //Holds rsdata that comes out of register file
+        Nbit_reg #(16, 16'b0) M_O_reg(.in(alu_result), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), .out(M_O_out)); //Holds dmem data
+        Nbit_reg #(16, 16'b0) W_O_register(.in(M_O_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_O_out));
+        
+        Nbit_reg #(16, 16'b0) X_B_reg(.in(rtdata), .clk(clk), .we(X_rt_re), .gwe(gwe), .rst(should_flush || rst), .out(X_B_out)); //Holds rtdata that comes out of register file
+        Nbit_reg #(16, 16'b0) M_B_reg(.in(i_alu_r2data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), .out(M_B_out)); //Holds dmem address
+        Nbit_reg #(16, 16'b0) W_D_register(.in(M_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_D_out));
 
-   Nbit_reg #(16, 16'b0) M_insn_reg(.in(X_insn_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(M_insn_out));
-   Nbit_reg #(16, 16'b0) M_O_reg(.in(M_O_in), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(M_O_out)); //Holds dmem data
-   Nbit_reg #(16, 16'b0) M_B_reg(.in(M_B_in), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(M_B_out)); //Holds dmem address 
-   Nbit_reg #(9, 9'b0) M_rs_rt_rd_reg(.in(x_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(m_rs_rt_rd));
-   Nbit_reg #(9, 9'b0) M_bus_reg(.in(x_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst), .out(m_bus));
+        //A_bypass_sel values: 0 -> MX bypass, 1 -> WX bypass, otherwise no bypass (comes straight from X_A_reg)
+        //B_bypass_sel values: 0 -> MX bypass, 1 -> WX bypass, otherwise no bypass (comes straight from X_B_reg)
+        assign i_alu_r1data = A_bypass_sel == 2'b00 ? M_O_out : (A_bypass_sel == 2'b01 ? rddata : X_A_out);
+        assign i_alu_r2data = B_bypass_sel == 2'b00 ? M_O_out : (B_bypass_sel == 2'b01 ? rddata : X_B_out);
+        lc4_alu alu (.i_insn(X_insn_out), .i_pc(X_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
-   Nbit_reg #(2, 2'b10) M_stall(.in(xx_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(mm_stall));
+        Nbit_reg #(9, 9'b0) D_bus_reg(.in(F_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),
+                                      .out(D_bus));
+        Nbit_reg #(9, 9'b0) X_bus_reg(.in(D_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                      .out(X_bus));
+        Nbit_reg #(9, 9'b0) M_bus_reg(.in(X_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst), 
+                                      .out(M_bus));
+        Nbit_reg #(9, 9'b0) W_bus_reg(.in(M_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst),             
+                                      .out(W_bus));
 
-   Nbit_reg #(16, 16'b0) M_data_reg(.in(X_data), .out(M_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst));
-   //END MEMORY STAGE
+        Nbit_reg #(16, 16'b0) F_data_reg(.in(i_cur_dmem_data), .out(F_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(16, 16'b0) D_data_reg(.in(F_data),          .out(D_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+        Nbit_reg #(16, 16'b0) X_data_reg(.in(D_data),          .out(X_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(16, 16'b0) M_data_reg(.in(X_data),          .out(M_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+        Nbit_reg #(16, 16'b0) W_data_reg(.in(M_data),          .out(W_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
+        Nbit_reg #(2, 2'b10) D_stall(.in(hazard),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(dd_stall));
+        Nbit_reg #(2, 2'b10) X_stall(.in(dd_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(xx_stall));
+        Nbit_reg #(2, 2'b10) M_stall(.in(xx_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(mm_stall));
+        Nbit_reg #(2, 2'b10) W_stall(.in(mm_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(ww_stall));
 
    
    //BEGIN WRITE STAGE
-   assign o_dmem_towrite = rddata_MB_sel ? M_B_out : rddata; //where rddata_MB_sel is evaluated using bypass logic control
-   assign W_O_in = M_O_out;
-   assign W_D_in = M_data; //given to us as the output of data memory
 
-   Nbit_reg #(16, 16'b0) W_insn_reg(.in(M_insn_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_insn_out)); 
-   Nbit_reg #(16, 16'b0) W_O_register(.in(W_O_in), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_O_out));
-   Nbit_reg #(16, 16'b0) W_D_register(.in(W_D_in), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(W_D_out));
-   Nbit_reg #(9, 9'b0) W_rs_rt_rd_reg(.in(m_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(w_rs_rt_rd));
-   Nbit_reg #(9, 9'b0) W_bus_reg(.in(m_bus), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(w_bus));
    
-   assign rddata = WO_WD_sel ? W_D_out : W_O_out; //where WO_WD_sel is found based on bypass control logic
-   assign rd = w_rs_rt_rd[8:6]; //this is most likely incorrect
+        assign nzp_in[2] = rddata[15];
+        assign nzp_in[1] = &(~rddata);
+        assign nzp_in[0] = ~rddata[15] && (|rddata);
 
-   Nbit_reg #(2, 2'b10) W_stall(.in(mm_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst), .out(ww_stall));
+        assign rddata = W_is_load ? W_D_out : W_O_out; //where WO_WD_sel is found based on bypass control logic
+        assign rd = W_rd; //TODO - this is most likely incorrect
+        assign next_pc = F_pc_plus_one; //assume the next pc is pc+1
    
-   Nbit_reg #(16, 16'b0) W_data_reg(.in(M_data), .out(W_data), .clk(clk), .we(1'b1), .gwe(gwe), .rst(is_flush || rst));
+
    //END WRITE STAGE
    
    //PIPELINE ENDS HERE
 
 
    //SET OUTPUTS
-   assign o_dmem_we = m_bus[2]; //if store instruction is in M stage is the only time we write to memory;          // Data memory write enable
-   assign o_dmem_addr = M_O_out;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
-   assign o_dmem_towrite = rddata_MB_sel ? M_B_out : rddata; 
-   assign o_cur_pc = is_flush ? M_O_in : f_pc;
+   assign o_dmem_we = M_is_store; //if store instruction is in M stage is the only time we write to memory;          // Data memory write enable
+   assign o_dmem_addr = M_is_store || M_is_load ? M_O_out : 16'b0;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
+   assign o_dmem_towrite = (W_is_load && M_is_store) && (W_rd == M_rt) ? M_B_out : rddata; 
+   assign o_cur_pc = should_flush ? alu_result : F_pc;
 
    //SET TESTING PINS - 
    //for reference rsre (8), rtre (7), regfilewe (6),
    //nzpwe (5), selectpcplusone (4), isload (3), isstore (2), isbranch (1), iscontrolinsn (0)
    //rs in [2:0], rt in [5:3], rd in [8:6]
-   assign test_regfile_we = w_bus[6];    // Testbench: register file write enable
-   assign test_regfile_wsel = w_rs_rt_rd[8:6];  // Testbench: which register to write in the register file
+   assign test_regfile_we = W_regfile_we;    // Testbench: register file write enable
+   assign test_regfile_wsel = W_rd;  // Testbench: which register to write in the register file
    assign test_regfile_data = rddata;  // Testbench: value to write into the register file
-   assign test_nzp_we = w_bus[5];     // Testbench: NZP condition codes write enable
+   assign test_nzp_we = W_nzp_we;     // Testbench: NZP condition codes write enable
    assign test_nzp_new_bits = nzp_in;  // Testbench: value to write to NZP bits
    assign test_dmem_we = o_dmem_we;       // Testbench: data memory write enable
    assign test_dmem_addr = o_dmem_addr;     // Testbench: address to read/write memory
@@ -230,7 +297,7 @@ module lc4_processor (input  wire        clk,                // Main clock
 
 `ifndef NDEBUG
    always @(posedge gwe) begin
-      $display("%d CURR_PC=%h, D_INSN=%h X_INSN=%h, M_INSN=%h, W_INSN=%h", $time, f_pc, D_insn_out, X_insn_out, M_insn_out, W_insn_out);
+      $display("%d CURR_PC=%h, D_INSN=%h X_INSN=%h, M_INSN=%h, W_INSN=%h", $time, F_pc, D_insn_out, X_insn_out, M_insn_out, W_insn_out);
 
       // if (o_dmem_we)
       //   $display("%d STORE %h <= %h", $time, o_dmem_addr, o_dmem_towrite);
@@ -278,13 +345,3 @@ module lc4_processor (input  wire        clk,                // Main clock
 `endif
 
 endmodule //end of single cycle
-
-module data_hazard(input wire xis_load, input wire dis_store, input wire x_isbranch, input wire [15:0] alu_out, input wire[15:0] i_x_pc_plus_one,
-	input wire[2:0] dr1, input wire[2:0] dr2, input wire[2:0] xw, output wire[1:0] o_stall);
-
-	wire is_load_to_use = xis_load && (dr1 == xw || (dr2 == xw && (~dis_store))) ? 1'b1 : 1'b0;	
-	wire superscalar = 1'b0;
-	wire flush = (x_isbranch && ~(i_x_pc_plus_one == alu_out));
-	assign o_stall = is_load_to_use ? 2'b11 : (superscalar ? 2'b01 : (flush ? 2'b10 : 2'b00));
-
-endmodule //end of data_hazard module

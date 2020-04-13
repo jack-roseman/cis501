@@ -36,7 +36,7 @@ module lc4_alu(input wire [15:0] i_insn,
        cla16 adder(.a(lhs), .b(rhs), .cin(cin), .sum(o_cla16));
        
        //logic - 0101
-       logic logical(.i_insn(i_insn), .i_rs(i_r1data), .i_rt(i_r2data), .i_sext(o_sext), .o_logic(o_logic));
+       logical logical(.i_insn(i_insn), .i_rs(i_r1data), .i_rt(i_r2data), .i_sext(o_sext), .o_logic(o_logic));
 
        //hiconst - 1101
        wire [15:0] hi_const = (i_r1data & {{8'b0}, {8{1'b1}}}) | (o_sext << 8);
@@ -93,7 +93,7 @@ module rhs(input wire [15:0] i_r2data,
 
 endmodule
 
-module logic(input wire [15:0] i_insn,
+module logical(input wire [15:0] i_insn,
              input wire [15:0] i_rs,
 	     input wire [15:0] i_rt,
 	     input wire [15:0] i_sext,

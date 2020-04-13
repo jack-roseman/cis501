@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 // Prevent implicit wire declaration
 `default_nettype none
 
