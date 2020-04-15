@@ -123,7 +123,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       // Program counter register, starts at 8200h at bootup
       Nbit_reg #(16, 16'h8200) pc_reg (.in(next_pc), .out(pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst || W_stall == 2'b10));
       Nbit_reg #(16, 16'b0)    D_pc_reg (.in(pc),    .out(D_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(16, 16'b0)    X_pc_reg (.in(D_pc),    .out(X_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)    X_pc_reg (.in(D_pc),    .out(X_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(16, 16'b0)    M_pc_reg (.in(X_pc),    .out(M_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)    W_pc_reg (.in(M_pc),    .out(W_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       cla16 add_one(.a(pc), .b(16'b0), .cin(1'b1), .sum(pc_plus_one)); //assume the next instruction for the current decoded insn is pc + 1
