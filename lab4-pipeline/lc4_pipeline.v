@@ -116,13 +116,13 @@ module lc4_processor (input  wire        clk,                // Main clock
       wire should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
       wire [1:0] hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
       wire is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001);
-      wire is_MX = ((M_rd == X_rs) || is_const_hiconst) ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00); 
-      wire is_WX = W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
+      wire [1:0] is_MX = 2'b00;//((M_rd == X_rs) || is_const_hiconst) ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00); 
+      wire [1:0] is_WX = 2'b00;//W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
 
       //BEGIN PIPELINE
       // Program counter register, starts at 8200h at bootup
-      Nbit_reg #(16, 16'h8200) pc_reg (.in(next_pc), .out(pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst || W_stall == 2'b10));
-      Nbit_reg #(16, 16'b0)    D_pc_reg (.in(pc),    .out(D_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
+      Nbit_reg #(16, 16'h8200) pc_reg   (.in(next_pc), .out(pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst || W_stall == 2'b10));
+      Nbit_reg #(16, 16'b0)     D_pc_reg (.in(pc),      .out(D_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)    X_pc_reg (.in(D_pc),    .out(X_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(16, 16'b0)    M_pc_reg (.in(X_pc),    .out(M_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)    W_pc_reg (.in(M_pc),    .out(W_pc), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -198,13 +198,13 @@ module lc4_processor (input  wire        clk,                // Main clock
 
       assign rddata = W_is_load ? W_D : W_O; //where WO_WD_sel is found based on bypass control logic
       assign rd = W_rd; //TODO - this is most likely incorrect
-      assign next_pc = pc_plus_one; //TODO - assume the next pc is pc+1
+      assign next_pc = should_flush ? alu_result : pc_plus_one; //TODO - assume the next pc is pc+1
 
       //SET OUTPUTS
       assign o_dmem_we = M_is_store; //if store instruction is in M stage is the only time we write to memory;          // Data memory write enable
       assign o_dmem_addr = M_is_store || M_is_load ? M_O : 16'b0;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
       assign o_dmem_towrite = M_data; //(W_is_load && M_is_store) && (W_rd == M_rt) ? M_B : rddata; 
-      assign o_cur_pc = should_flush ? alu_result : pc;
+      assign o_cur_pc = pc;
 
       //SET TESTING PINS - 
       assign test_regfile_we = W_regfile_we;    // Testbench: register file write enable
