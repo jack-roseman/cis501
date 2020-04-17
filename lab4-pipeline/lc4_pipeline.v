@@ -148,7 +148,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
       assign is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001);
-      assign is_MX = M_rd == X_rs ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00);
+      assign is_MX = M_rd == X_rs || is_const_hiconst ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00);
       assign is_WX = W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
       assign first_insn_through = W_stall == 2'b00;
 
