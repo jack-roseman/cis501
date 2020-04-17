@@ -147,17 +147,17 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign should_stall = X_is_load && (D_rd == D_rs || (D_rd == D_rt && ~D_is_store));	
       assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
-      assign is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001);
+      assign is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001) && X_rd == M_rd;
       assign is_MX = M_rd == X_rs || is_const_hiconst ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00);
       assign is_WX = W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
       assign first_insn_through = W_stall == 2'b00;
 
       wire tmp1, tmp2, tmp3, first_insn_ready;
 
-      Nbit_reg #(1, 1'b00)     follow_first_1(.in(1'b1), .out(tmp1),             .clk(clk), .we(), .gwe(gwe), .rst(rst || first_insn_ready));
-      Nbit_reg #(1, 1'b00)     follow_first_2(.in(tmp1), .out(tmp2),             .clk(clk), .we(), .gwe(gwe), .rst(rst));
-      Nbit_reg #(1, 1'b00)     follow_first_3(.in(tmp2), .out(tmp3),             .clk(clk), .we(), .gwe(gwe), .rst(rst));
-      Nbit_reg #(1, 1'b00)     follow_first_4(.in(tmp3), .out(first_insn_ready), .clk(clk), .we(), .gwe(gwe), .rst(rst));
+      Nbit_reg #(1, 1'b0) follow_first_1(.in(1'b1), .out(tmp1),             .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(1, 1'b0) follow_first_2(.in(tmp1), .out(tmp2),             .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(1, 1'b0) follow_first_3(.in(tmp2), .out(tmp3),             .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(1, 1'b0) follow_first_4(.in(tmp3), .out(first_insn_ready), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       //DECODE CURRENT INSTRUCTION
       lc4_decoder dec(  .insn(i_cur_insn), 
                         .r1sel(D_rs_rt_rd[8:6]), .r1re(D_bus[8]),
@@ -227,7 +227,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign o_dmem_we = W_is_store;  // Data memory write enable
       assign o_dmem_addr = W_is_store || W_is_load ? W_B : 16'b0;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
       assign o_dmem_towrite = W_B;//(is_load && W_is_store) && (rd == W_rt) ? W_B : rddata; 
-      assign o_cur_pc = ~first_insn_ready ? pc : next_pc;
+      assign o_cur_pc = first_insn_ready ? next_pc : pc;
 
       //SET TESTING PINS - 
       assign test_regfile_we   = regfile_we;    // Testbench: register file write enable

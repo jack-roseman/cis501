@@ -1,5 +1,5 @@
 $date
-	Fri Apr 17 19:18:53 2020
+	Fri Apr 17 19:30:36 2020
 $end
 $version
 	Icarus Verilog
@@ -1664,146 +1664,146 @@ $scope module follow_first_1 $end
 $var wire 1 7 clk $end
 $var wire 1 L, in $end
 $var wire 1 !# out $end
-$var wire 1 M, rst $end
-$var wire 1 N, we $end
+$var wire 1 9 rst $end
+$var wire 1 M, we $end
 $var wire 1 / gwe $end
-$var reg 1 O, state $end
+$var reg 1 N, state $end
 $upscope $end
 $scope module follow_first_2 $end
 $var wire 1 7 clk $end
 $var wire 1 !# in $end
 $var wire 1 ~" out $end
 $var wire 1 9 rst $end
-$var wire 1 P, we $end
+$var wire 1 O, we $end
 $var wire 1 / gwe $end
-$var reg 1 Q, state $end
+$var reg 1 P, state $end
 $upscope $end
 $scope module follow_first_3 $end
 $var wire 1 7 clk $end
 $var wire 1 ~" in $end
 $var wire 1 }" out $end
 $var wire 1 9 rst $end
-$var wire 1 R, we $end
+$var wire 1 Q, we $end
 $var wire 1 / gwe $end
-$var reg 1 S, state $end
+$var reg 1 R, state $end
 $upscope $end
 $scope module follow_first_4 $end
 $var wire 1 7 clk $end
 $var wire 1 }" in $end
 $var wire 1 B# out $end
 $var wire 1 9 rst $end
-$var wire 1 T, we $end
+$var wire 1 S, we $end
 $var wire 1 / gwe $end
-$var reg 1 U, state $end
+$var reg 1 T, state $end
 $upscope $end
 $scope module nzpreg $end
 $var wire 1 7 clk $end
-$var wire 3 V, in [2:0] $end
-$var wire 3 W, out [2:0] $end
+$var wire 3 U, in [2:0] $end
+$var wire 3 V, out [2:0] $end
 $var wire 1 9 rst $end
 $var wire 1 3# we $end
 $var wire 1 / gwe $end
-$var reg 3 X, state [2:0] $end
+$var reg 3 W, state [2:0] $end
 $upscope $end
 $scope module pc_reg $end
 $var wire 1 7 clk $end
-$var wire 16 Y, in [15:0] $end
-$var wire 16 Z, out [15:0] $end
+$var wire 16 X, in [15:0] $end
+$var wire 16 Y, out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 [, we $end
+$var wire 1 Z, we $end
 $var wire 1 / gwe $end
-$var reg 16 \, state [15:0] $end
+$var reg 16 [, state [15:0] $end
 $upscope $end
 $scope module registerfile $end
 $var wire 1 7 clk $end
-$var wire 3 ], i_rd [2:0] $end
+$var wire 3 \, i_rd [2:0] $end
 $var wire 1 +# i_rd_we $end
-$var wire 3 ^, i_rs [2:0] $end
-$var wire 3 _, i_rt [2:0] $end
-$var wire 16 `, i_wdata [15:0] $end
+$var wire 3 ], i_rs [2:0] $end
+$var wire 3 ^, i_rt [2:0] $end
+$var wire 16 _, i_wdata [15:0] $end
 $var wire 1 9 rst $end
-$var wire 16 a, r7 [15:0] $end
-$var wire 16 b, r6 [15:0] $end
-$var wire 16 c, r5 [15:0] $end
-$var wire 16 d, r4 [15:0] $end
-$var wire 16 e, r3 [15:0] $end
-$var wire 16 f, r2 [15:0] $end
-$var wire 16 g, r1 [15:0] $end
-$var wire 16 h, r0 [15:0] $end
-$var wire 16 i, o_rt_data [15:0] $end
-$var wire 16 j, o_rs_data [15:0] $end
+$var wire 16 `, r7 [15:0] $end
+$var wire 16 a, r6 [15:0] $end
+$var wire 16 b, r5 [15:0] $end
+$var wire 16 c, r4 [15:0] $end
+$var wire 16 d, r3 [15:0] $end
+$var wire 16 e, r2 [15:0] $end
+$var wire 16 f, r1 [15:0] $end
+$var wire 16 g, r0 [15:0] $end
+$var wire 16 h, o_rt_data [15:0] $end
+$var wire 16 i, o_rs_data [15:0] $end
 $var wire 1 / gwe $end
 $scope module r_0 $end
 $var wire 1 7 clk $end
-$var wire 16 k, in [15:0] $end
-$var wire 16 l, out [15:0] $end
+$var wire 16 j, in [15:0] $end
+$var wire 16 k, out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 m, we $end
+$var wire 1 l, we $end
 $var wire 1 / gwe $end
-$var reg 16 n, state [15:0] $end
+$var reg 16 m, state [15:0] $end
 $upscope $end
 $scope module r_1 $end
 $var wire 1 7 clk $end
-$var wire 16 o, in [15:0] $end
-$var wire 16 p, out [15:0] $end
+$var wire 16 n, in [15:0] $end
+$var wire 16 o, out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 q, we $end
+$var wire 1 p, we $end
 $var wire 1 / gwe $end
-$var reg 16 r, state [15:0] $end
+$var reg 16 q, state [15:0] $end
 $upscope $end
 $scope module r_2 $end
 $var wire 1 7 clk $end
-$var wire 16 s, in [15:0] $end
-$var wire 16 t, out [15:0] $end
+$var wire 16 r, in [15:0] $end
+$var wire 16 s, out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 u, we $end
+$var wire 1 t, we $end
 $var wire 1 / gwe $end
-$var reg 16 v, state [15:0] $end
+$var reg 16 u, state [15:0] $end
 $upscope $end
 $scope module r_3 $end
 $var wire 1 7 clk $end
-$var wire 16 w, in [15:0] $end
-$var wire 16 x, out [15:0] $end
+$var wire 16 v, in [15:0] $end
+$var wire 16 w, out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 y, we $end
+$var wire 1 x, we $end
 $var wire 1 / gwe $end
-$var reg 16 z, state [15:0] $end
+$var reg 16 y, state [15:0] $end
 $upscope $end
 $scope module r_4 $end
 $var wire 1 7 clk $end
-$var wire 16 {, in [15:0] $end
-$var wire 16 |, out [15:0] $end
+$var wire 16 z, in [15:0] $end
+$var wire 16 {, out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 }, we $end
+$var wire 1 |, we $end
 $var wire 1 / gwe $end
-$var reg 16 ~, state [15:0] $end
+$var reg 16 }, state [15:0] $end
 $upscope $end
 $scope module r_5 $end
 $var wire 1 7 clk $end
-$var wire 16 !- in [15:0] $end
-$var wire 16 "- out [15:0] $end
+$var wire 16 ~, in [15:0] $end
+$var wire 16 !- out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 #- we $end
+$var wire 1 "- we $end
 $var wire 1 / gwe $end
-$var reg 16 $- state [15:0] $end
+$var reg 16 #- state [15:0] $end
 $upscope $end
 $scope module r_6 $end
 $var wire 1 7 clk $end
-$var wire 16 %- in [15:0] $end
-$var wire 16 &- out [15:0] $end
+$var wire 16 $- in [15:0] $end
+$var wire 16 %- out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 '- we $end
+$var wire 1 &- we $end
 $var wire 1 / gwe $end
-$var reg 16 (- state [15:0] $end
+$var reg 16 '- state [15:0] $end
 $upscope $end
 $scope module r_7 $end
 $var wire 1 7 clk $end
-$var wire 16 )- in [15:0] $end
-$var wire 16 *- out [15:0] $end
+$var wire 16 (- in [15:0] $end
+$var wire 16 )- out [15:0] $end
 $var wire 1 9 rst $end
-$var wire 1 +- we $end
+$var wire 1 *- we $end
 $var wire 1 / gwe $end
-$var reg 16 ,- state [15:0] $end
+$var reg 16 +- state [15:0] $end
 $upscope $end
 $upscope $end
 $upscope $end
@@ -1813,63 +1813,62 @@ $var wire 1 - i2re $end
 $var wire 1 . i1re $end
 $var wire 1 / gwe $end
 $var wire 1 0 dre $end
-$var wire 2 -- clk_counter [1:0] $end
+$var wire 2 ,- clk_counter [1:0] $end
 $scope module global_we_count $end
 $var wire 1 7 clk $end
-$var wire 2 .- out [1:0] $end
-$var reg 2 /- q [1:0] $end
+$var wire 2 -- out [1:0] $end
+$var reg 2 .- q [1:0] $end
 $upscope $end
 $upscope $end
 $scope task pinstr $end
-$var reg 16 0- insn [15:0] $end
-$var reg 5 1- op [4:0] $end
+$var reg 16 /- insn [15:0] $end
+$var reg 5 0- op [4:0] $end
 $upscope $end
 $scope task printPoints $end
-$var reg 32 2- actual [31:0] $end
-$var reg 32 3- possible [31:0] $end
+$var reg 32 1- actual [31:0] $end
+$var reg 32 2- possible [31:0] $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
 #0
 $dumpvars
-bx 3-
 bx 2-
 bx 1-
 bx 0-
-b0 /-
-bx .-
+bx /-
+b0 .-
 bx --
 bx ,-
-x+-
-bx *-
+bx +-
+x*-
 bx )-
 bx (-
-x'-
-bx &-
+bx '-
+x&-
 bx %-
 bx $-
-x#-
-bx "-
+bx #-
+x"-
 bx !-
 bx ~,
-x},
-bx |,
+bx },
+x|,
 bx {,
 bx z,
-xy,
-bx x,
+bx y,
+xx,
 bx w,
 bx v,
-xu,
-bx t,
+bx u,
+xt,
 bx s,
 bx r,
-xq,
-bx p,
+bx q,
+xp,
 bx o,
 bx n,
-xm,
-bx l,
+bx m,
+xl,
 bx k,
 bx j,
 bx i,
@@ -1886,20 +1885,20 @@ bx _,
 bx ^,
 bx ],
 bx \,
-1[,
-bx Z,
+bx [,
+1Z,
 bx Y,
 bx X,
 bx W,
 bx V,
-xU,
-zT,
-xS,
-zR,
-xQ,
-zP,
-xO,
-zN,
+bx U,
+xT,
+1S,
+xR,
+1Q,
+xP,
+1O,
+xN,
 1M,
 1L,
 xK,
@@ -2988,10 +2987,10 @@ $end
 0S"
 0-
 1.
+b0 ,-
 b0 --
-b0 .-
 #5000
-b1 /-
+b1 .-
 b0 g"
 b0 k"
 17
@@ -3005,8 +3004,8 @@ b0 Z"
 1S"
 1-
 0.
+b1 ,-
 b1 --
-b1 .-
 b0 ["
 b0 f"
 b0 Y"
@@ -3087,7 +3086,7 @@ b0 \"
 b0 a"
 b0 e"
 b0 i"
-b10 /-
+b10 .-
 17
 #16000
 xQ"
@@ -3095,31 +3094,31 @@ xQ"
 10
 0S"
 0-
+b10 ,-
 b10 --
-b10 .-
 #20000
 07
 #25000
-b11 /-
+b11 .-
 17
 #26000
 1/
 0U"
 00
+b11 ,-
 b11 --
-b11 .-
 #30000
 07
 #35000
-b0 ,-
-b0 (-
-b0 $-
-b0 ~,
-b0 z,
-b0 v,
-b0 r,
-b0 n,
-b0 X,
+b0 +-
+b0 '-
+b0 #-
+b0 },
+b0 y,
+b0 u,
+b0 q,
+b0 m,
+b0 W,
 b10 ,%
 b0 z$
 b0 r$
@@ -3149,11 +3148,11 @@ b0 5$
 b0 I$
 b0 ?$
 b0 D$
-0U,
-0S,
-0Q,
-0O,
-b1000001000000000 \,
+0T,
+0R,
+0P,
+0N,
+b1000001000000000 [,
 b0 P"
 b0 L"
 b0 H"
@@ -3170,7 +3169,7 @@ b0 t
 b0 p
 b0 l
 b0 h
-b0 /-
+b0 .-
 17
 #36000
 0-+
@@ -3649,7 +3648,7 @@ b0 I'
 b0 k+
 b1000000000000000 ''
 b1000001000000001 6#
-b1000001000000001 Y,
+b1000001000000001 X,
 1B$
 1>$
 1H$
@@ -3667,16 +3666,17 @@ b0 p&
 b10 (
 b10 y"
 b10 4#
-b10 V,
-0m,
-0q,
-0u,
-0y,
-0},
-0#-
-0'-
-0+-
+b10 U,
+0l,
+0p,
+0t,
+0x,
+0|,
+0"-
+0&-
+0*-
 b1 ;#
+0n"
 b0 !'
 b0 -'
 b0 b+
@@ -3685,11 +3685,6 @@ b0 o+
 b0 y+
 0q"
 0r"
-0n"
-b1000001000000000 4
-b1000001000000000 W
-b1000001000000000 ]"
-b1000001000000000 2#
 1K&
 0G&
 0C&
@@ -3710,10 +3705,10 @@ b1000001000000000 b%
 0Q"
 b0 $#
 b0 5%
-b0 i,
+b0 h,
 b0 '#
 b0 0%
-b0 j,
+b0 i,
 09#
 0:#
 07#
@@ -3728,23 +3723,23 @@ b0 j,
 b0 %
 b0 z"
 b0 ,#
-b0 `,
-b0 k,
-b0 o,
-b0 s,
-b0 w,
-b0 {,
-b0 !-
-b0 %-
-b0 )-
+b0 _,
+b0 j,
+b0 n,
+b0 r,
+b0 v,
+b0 z,
+b0 ~,
+b0 $-
+b0 (-
 b0 $
 b0 {"
 b0 -#
-b0 ],
+b0 \,
 b0 &#
-b0 _,
-b0 *#
 b0 ^,
+b0 *#
+b0 ],
 0d#
 0e#
 0*
@@ -3816,25 +3811,29 @@ b0 K#
 0r%
 0n%
 0j%
+b1000001000000000 4
+b1000001000000000 W
+b1000001000000000 ]"
+b1000001000000000 2#
 b1000001000000000 X"
+b0 `,
+b0 )-
 b0 a,
-b0 *-
+b0 %-
 b0 b,
-b0 &-
+b0 !-
 b0 c,
-b0 "-
+b0 {,
 b0 d,
-b0 |,
+b0 w,
 b0 e,
-b0 x,
+b0 s,
 b0 f,
-b0 t,
+b0 o,
 b0 g,
-b0 p,
-b0 h,
-b0 l,
+b0 k,
 b0 5#
-b0 W,
+b0 V,
 b10 "
 b10 |"
 b10 "#
@@ -3944,7 +3943,7 @@ b0 F%
 b1000001000000000 0#
 b1000001000000000 C$
 b1000001000000000 i%
-b1000001000000000 Z,
+b1000001000000000 Y,
 b0 T
 b0 '"
 b0 ("
@@ -3997,15 +3996,15 @@ b0 e
 b0 i
 0/
 1.
+b0 ,-
 b0 --
-b0 .-
 #40000
 07
 #45000
 b1001000000010000 a"
 b1001000000010000 e"
 b1001000000010000 i"
-b1 /-
+b1 .-
 17
 #46000
 1+$
@@ -4031,8 +4030,8 @@ b0 X"
 1S"
 1-
 0.
+b1 ,-
 b1 --
-b1 .-
 #50000
 07
 #55000
@@ -4056,15 +4055,15 @@ b0 \"
 b0 a"
 b0 e"
 b0 i"
-b10 /-
+b10 .-
 17
 #56000
 1U"
 10
 0S"
 0-
+b10 ,-
 b10 --
-b10 .-
 #60000
 07
 #65000
@@ -4074,28 +4073,27 @@ b0 R"
 b0 l"
 b0 6$
 b0 `"
-b11 /-
+b11 .-
 17
 #66000
 1/
 0U"
 00
+b11 ,-
 b11 --
-b11 .-
 #70000
 07
 #75000
-b0 /-
+b0 .-
 17
 #76000
 b1000001000000000 X"
 0/
 1.
+b0 ,-
 b0 --
-b0 .-
 #80000
 07
-0M,
 0A$
 0=$
 0G$
@@ -4115,7 +4113,7 @@ b0 .-
 b1001000000010000 a"
 b1001000000010000 e"
 b1001000000010000 i"
-b1 /-
+b1 .-
 17
 #86000
 1+$
@@ -4141,8 +4139,8 @@ b0 X"
 1S"
 1-
 0.
+b1 ,-
 b1 --
-b1 .-
 #90000
 07
 #95000
@@ -4167,7 +4165,7 @@ b0 a"
 b0 e"
 b0 i"
 b1001000000010000 g"
-b10 /-
+b10 .-
 17
 #96000
 1+$
@@ -4195,19 +4193,19 @@ b1001000000010000 f"
 10
 0S"
 0-
+b10 ,-
 b10 --
-b10 .-
 #100000
 07
 #105000
-b11 /-
+b11 .-
 17
 #106000
 1/
 0U"
 00
+b11 ,-
 b11 --
-b11 .-
 #110000
 07
 #112000
@@ -4229,16 +4227,17 @@ b0 N$
 b1100000 5$
 b1001000000010000 ?$
 b1000001000000000 D$
-b1000001000000001 \,
+1N,
+b1000001000000001 [,
 b1001000000010000 h
-b0 /-
+b0 .-
 17
 #116000
 bz00000000000000011 h%
 b1 q&
 1f&
 b1000001000000010 6#
-b1000001000000010 Y,
+b1000001000000010 X,
 b1000001000000010 .#
 b1000001000000010 ]%
 b1 p&
@@ -4267,24 +4266,25 @@ b1001000000010000 A%
 b1000001000000000 N#
 b1000001000000000 @$
 b1000001000000000 F%
+1!#
 b1000001000000001 0#
 b1000001000000001 C$
 b1000001000000001 i%
-b1000001000000001 Z,
+b1000001000000001 Y,
 b1001000000010000 c
 b1001000000010000 e
 b1001000000010000 i
 0/
 1.
+b0 ,-
 b0 --
-b0 .-
 #120000
 07
 #125000
 b1101000110110000 a"
 b1101000110110000 e"
 b1101000110110000 i"
-b1 /-
+b1 .-
 17
 #126000
 1&$
@@ -4307,8 +4307,8 @@ b0 X"
 1S"
 1-
 0.
+b1 ,-
 b1 --
-b1 .-
 #130000
 07
 #135000
@@ -4335,7 +4335,7 @@ b0 a"
 b0 e"
 b0 i"
 b1101000110110000 g"
-b10 /-
+b10 .-
 17
 #136000
 1+$
@@ -4365,19 +4365,19 @@ b1101000110110000 f"
 10
 0S"
 0-
+b10 ,-
 b10 --
-b10 .-
 #140000
 07
 #145000
-b11 /-
+b11 .-
 17
 #146000
 1/
 0U"
 00
+b11 ,-
 b11 --
-b11 .-
 #150000
 07
 #152000
@@ -4395,10 +4395,11 @@ b1000001000000000 J%
 b101100000 5$
 b1101000110110000 ?$
 b1000001000000001 D$
-b1000001000000010 \,
+1P,
+b1000001000000010 [,
 b1001000000010000 l
 b1101000110110000 h
-b0 /-
+b0 .-
 17
 #156000
 b0 N+
@@ -4483,7 +4484,7 @@ b10000 c+
 b0 E(
 b0 8(
 b1000001000000011 6#
-b1000001000000011 Y,
+b1000001000000011 X,
 b0 z+
 b0 ('
 b0 I'
@@ -4492,13 +4493,14 @@ b1000000000010000 ''
 0,(
 b10000 B'
 0r'
+1n"
 b1000001000000011 .#
 b1000001000000011 ]%
 b10 p&
 b1 (
 b1 y"
 b1 4#
-b1 V,
+b1 U,
 b10000 !'
 b10000 -'
 b10000 b+
@@ -4507,22 +4509,21 @@ b10000 o+
 b10000 y+
 0)(
 0o'
-1n"
 1q%
 b1000001000000010 b%
 0m%
 b1 %
 b1 z"
 b1 ,#
-b1 `,
-b1 k,
-b1 o,
-b1 s,
-b1 w,
-b1 {,
-b1 !-
-b1 %-
-b1 )-
+b1 _,
+b1 j,
+b1 n,
+b1 r,
+b1 v,
+b1 z,
+b1 ~,
+b1 $-
+b1 (-
 1v#
 1s#
 b1001 +'
@@ -4581,10 +4582,11 @@ b1101000110110000 A%
 b1000001000000001 N#
 b1000001000000001 @$
 b1000001000000001 F%
+1~"
 b1000001000000010 0#
 b1000001000000010 C$
 b1000001000000010 i%
-b1000001000000010 Z,
+b1000001000000010 Y,
 b1001000000010000 b
 b1001000000010000 j
 b1001000000010000 m
@@ -4593,15 +4595,15 @@ b1101000110110000 e
 b1101000110110000 i
 0/
 1.
+b0 ,-
 b0 --
-b0 .-
 #160000
 07
 #165000
 b1001001000010000 a"
 b1001001000010000 e"
 b1001001000010000 i"
-b1 /-
+b1 .-
 17
 #166000
 1+$
@@ -4634,8 +4636,8 @@ b0 X"
 1S"
 1-
 0.
+b1 ,-
 b1 --
-b1 .-
 #170000
 07
 #175000
@@ -4658,5 +4660,4 @@ b0 ;$
 b0 |+
 b0 U
 b0 d
-b0 g
-b0 
+b
