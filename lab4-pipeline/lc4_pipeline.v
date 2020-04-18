@@ -147,10 +147,10 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign should_stall = X_is_load && (D_rd == D_rs || (D_rd == D_rt && ~D_is_store));	
       assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
-      //assign is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001) && (X_rd == M_rd);
-      assign is_MX = 2'b00; //M_rd == X_rs ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00);
-      assign is_WX = 2'b00; //W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
-      assign first_insn_through = W_stall == 2'b00;
+      assign is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001) && (X_rd == M_rd);
+      // assign is_MX = ((M_rd == X_rs) || is_const_hiconst) ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00);
+      // assign is_WX = 2'b00; //W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
+      assign first_insn_through = stall_out == 2'b00;
 
       //DECODE CURRENT INSTRUCTION
       lc4_decoder dec(  .insn(i_cur_insn), 
@@ -160,7 +160,7 @@ module lc4_processor (input  wire        clk,                // Main clock
                         .nzp_we(D_bus[5]),       .select_pc_plus_one(D_bus[4]), 
                         .is_load(D_bus[3]),      .is_store(D_bus[2]), 
                         .is_branch(D_bus[1]),    .is_control_insn(D_bus[0]));
-
+      
       Nbit_reg #(16, 16'b0)       DX_pc_reg(.in(pc),              .out(X_pc),       .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(16, 16'b0)     DX_insn_reg(.in(i_cur_insn),      .out(X_insn),     .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(9, 9'b0)   DX_rs_rt_rd_reg(.in(D_rs_rt_rd),      .out(X_rs_rt_rd), .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
@@ -176,9 +176,10 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(9, 9'b0)      XM_bus_reg(.in(X_bus),      .out(M_bus),      .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(16, 16'b0)   XM_data_reg(.in(X_data),     .out(M_data),     .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
+      
+      assign i_alu_r1data = ((M_rd == X_rs) || is_const_hiconst) ? W_O : (W_rd == X_rs ? rddata : M_A);
+      assign i_alu_r2data = M_rd == X_rt ? W_O : (W_rd == X_rt ? rddata : M_B);
 
-      assign i_alu_r1data = is_MX == 2'b01 ? alu_result : (is_WX == 2'b01 ? rddata : M_A);
-      assign i_alu_r2data = is_MX == 2'b10 ? alu_result : (is_WX == 2'b10 ? rddata : M_B);
       lc4_alu alu (.i_insn(M_insn), .i_pc(M_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
       Nbit_reg #(16, 16'b0)     MW_pc_reg(.in(M_pc),         .out(W_pc),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -229,7 +230,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign test_regfile_data = rddata;  // Testbench: value to write into the register file
       assign test_nzp_we       = nzp_we;     // Testbench: NZP condition codes write enable
       assign test_nzp_new_bits = nzp_in;  // Testbench: value to write to NZP bits
-      assign test_dmem_we      = W_is_store;       // Testbench: data memory write enable
+      assign test_dmem_we      = o_dmem_we;       // Testbench: data memory write enable
       assign test_dmem_addr    = o_dmem_addr;     // Testbench: address to read/write memory
       assign test_dmem_data    = D_out;     // Testbench: value read/writen from/to memory 
       assign test_stall        = stall_out; // Always execute one instruction each cycle (test_stall will get used in your pipelined processor)
