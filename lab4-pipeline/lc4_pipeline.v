@@ -222,7 +222,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign o_dmem_we = W_is_store;  // Data memory write enable
       assign o_dmem_addr = W_is_store || W_is_load ? W_B : 16'b0;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
       assign o_dmem_towrite = W_B;//(is_load && W_is_store) && (rd == W_rt) ? W_B : rddata; 
-      assign o_cur_pc = first_insn_through ? next_pc : pc;
+      assign o_cur_pc = pc;
 
       //SET TESTING PINS - 
       assign test_regfile_we   = regfile_we;    // Testbench: register file write enable
