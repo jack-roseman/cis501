@@ -49,8 +49,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       // you desire.
       assign led_data = switch_data;
       wire superscalar = 1'b0;
-      wire first_insn_through, should_flush, should_stall, is_const_hiconst;
-      wire [1:0] is_MX, is_WX;
+      wire should_flush, should_stall;
       wire [1:0] hazard, D_stall, X_stall, M_stall, W_stall, stall_out;
       wire [2:0] nzp_in, nzp;
       wire [2:0] rs, rt, rd;
@@ -130,28 +129,24 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign W_is_branch =          W_bus[1];
       assign W_is_control_insn =    W_bus[0];
 
-      assign rs_re =              bus_out[8];
-      assign rt_re =              bus_out[7];
-      assign regfile_we =         bus_out[6];
-      assign nzp_we =             bus_out[5];
-      assign select_pc_plus_one = bus_out[4];
-      assign is_load =            bus_out[3];
-      assign is_store =           bus_out[2];
-      assign is_branch =          bus_out[1];
-      assign is_control_insn =    bus_out[0];
+      assign rs_re               = bus_out[8];
+      assign rt_re               = bus_out[7];
+      assign regfile_we          = bus_out[6];
+      assign nzp_we              = bus_out[5];
+      assign select_pc_plus_one  = bus_out[4];
+      assign is_load             = bus_out[3];
+      assign is_store            = bus_out[2];
+      assign is_branch           = bus_out[1];
+      assign is_control_insn     = bus_out[0];
+
+      assign rs                  = rs_rt_rd_out[8:6];
+      assign rt                  = rs_rt_rd_out[5:3]; 
+      assign rd                  = rs_rt_rd_out[2:0];
  
       Nbit_reg #(16, 16'h8200) pc_reg (.in(next_pc), .out(pc), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
 
       cla16 add_one(.a(pc), .b(16'b0), .cin(1'b1), .sum(pc_plus_one)); //assume the next instruction for the current decoded insn is pc + 1
-
-      assign should_stall = X_is_load && (D_rd == D_rs || (D_rd == D_rt && ~D_is_store));	
-      assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
-      assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
-      assign is_const_hiconst = (X_insn[15:12] == 4'b1101) && (M_insn[15:12] == 4'b1001) && (X_rd == M_rd);
-      // assign is_MX = ((M_rd == X_rs) || is_const_hiconst) ? 2'b01 : (M_rd == X_rt ? 2'b10 : 2'b00);
-      // assign is_WX = 2'b00; //W_rd == X_rs ? 2'b01 : (W_rd == X_rt ? 2'b10 : 2'b00);
-      assign first_insn_through = stall_out == 2'b00;
-
+      
       //DECODE CURRENT INSTRUCTION
       lc4_decoder dec(  .insn(i_cur_insn), 
                         .r1sel(D_rs_rt_rd[8:6]), .r1re(D_bus[8]),
@@ -177,9 +172,6 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)   XM_data_reg(.in(X_data),     .out(M_data),     .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
 
-      assign i_alu_r1data = W_rd == M_rs ? W_O : (rd == M_rs ? rddata : M_A);
-      assign i_alu_r2data = W_rd == M_rt ? W_O : (rd == M_rt ? rddata : M_B);
-
       lc4_alu alu (.i_insn(M_insn), .i_pc(M_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
       Nbit_reg #(16, 16'b0)     MW_pc_reg(.in(M_pc),         .out(W_pc),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -198,25 +190,26 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      WD_D_reg(.in(W_data),       .out(D_out),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
       Nbit_reg #(9, 9'b0)      WD_bus_reg(.in(W_bus),        .out(bus_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),      .out(stall_out),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      
+      Nbit_reg #(3) nzpreg(.in(nzp_in), .out(nzp), .clk(clk), .we(nzp_we), .gwe(gwe), .rst(rst)); 
+      lc4_regfile registerfile(  .i_rs(rs),        .i_rt(rt),        .i_rd(rd),
+                                 .o_rs_data(rsdata), .o_rt_data(rtdata), .i_wdata(rddata), .i_rd_we(regfile_we),
+                                 .clk(clk), .gwe(gwe), .rst(rst)); 
+      
 
-      assign rs        = rs_rt_rd_out[8:6];
-      assign rt        = rs_rt_rd_out[5:3]; 
-      assign rd        = rs_rt_rd_out[2:0];
+      assign should_stall = X_is_load && (D_rd == D_rs || (D_rd == D_rt && ~D_is_store));	
+      assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
+      assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
+
+      assign i_alu_r1data = W_rd == M_rs ? W_O : (rd == M_rs ? rddata : M_A);
+      assign i_alu_r2data = W_rd == M_rt ? W_O : (rd == M_rt ? rddata : M_B);
+
       assign rddata    = is_load ? D_out : O_out;
       assign nzp_in[2] = rddata[15];
       assign nzp_in[1] = &(~rddata);
       assign nzp_in[0] = ~rddata[15] && (|rddata);
 
-      Nbit_reg #(3) nzpreg(.in(nzp_in), .out(nzp), .clk(clk), .we(nzp_we), .gwe(gwe), .rst(rst)); 
-      lc4_regfile registerfile(  .i_rs(rs),        .i_rt(rt),        .i_rd(rd),
-                                 .o_rs_data(rsdata), .o_rt_data(rtdata), .i_wdata(rddata), .i_rd_we(regfile_we),
-                                 .clk(clk), .gwe(gwe), .rst(rst)); 
-
-      
-      //Nbit_reg #(2, 2'b10) W_stall_reg(.in(W_stall), .out(o_stall), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-
-
-      assign next_pc = should_flush ? alu_result : pc_plus_one ; //TODO - assume the next pc is pc+1
+      assign next_pc = should_flush ? alu_result : pc_plus_one ; //assume the next pc is pc+1
 
       //SET OUTPUTS
       assign o_dmem_we = W_is_store;  // Data memory write enable
