@@ -1,0 +1,19 @@
+0.6
+2017.4
+Dec 15 2017
+20:57:24
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/.set_testcase.v,1588027244,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_alu.v,,,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/bram.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/testbench_lc4_processor.v,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/.set_testcase.v,bram,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/clock_util.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/delay_eight_cycles.v,,count;lc4_we_gen,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/delay_eight_cycles.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/bram.v,,delay_eight_cycles,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/lc4_memory.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/clock_util.v,,lc4_memory,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/lc4_prettyprint_errors.v,1587161972,verilog,,,,,,,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/register.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/lc4_memory.v,,Nbit_reg,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_alu.v,1587162027,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_cla.v,,arith;cmp;jsr;lc4_alu;lhs;logical;rhs;shift;sign_ext,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_cla.v,1587162027,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_decoder.v,,cla16;gp1;gp4;gpn,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_decoder.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_divider.v,,lc4_decoder,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_divider.v,1587161972,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_regfile.v,,lc4_divider;lc4_divider_one_iter,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_pipeline.v,1588026967,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/register.v,,lc4_processor,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_regfile.v,1587162027,verilog,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/lc4_pipeline.v,,lc4_regfile,,mylib,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/print_points.v,1587161972,verilog,,,,,,,,,,,,
+/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/testbench_lc4_processor.v,1587161973,verilog,,,/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/.set_testcase.v;/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/print_points.v;/mnt/castor/seas_home/j/jackrose/cis501/lab4-pipeline/include/lc4_prettyprint_errors.v,test_processor,,mylib,,,,,,
