@@ -176,9 +176,9 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(9, 9'b0)      XM_bus_reg(.in(X_bus),      .out(M_bus),      .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(16, 16'b0)   XM_data_reg(.in(X_data),     .out(M_data),     .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
-      
-      assign i_alu_r1data = ((M_rd == X_rs) || is_const_hiconst) ? W_O : (W_rd == X_rs ? rddata : M_A);
-      assign i_alu_r2data = M_rd == X_rt ? W_O : (W_rd == X_rt ? rddata : M_B);
+
+      assign i_alu_r1data = W_rd == M_rs ? W_O : (rd == M_rs ? rddata : M_A);
+      assign i_alu_r2data = W_rd == M_rt ? W_O : (rd == M_rt ? rddata : M_B);
 
       lc4_alu alu (.i_insn(M_insn), .i_pc(M_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
@@ -198,14 +198,14 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      WD_D_reg(.in(W_data),       .out(D_out),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
       Nbit_reg #(9, 9'b0)      WD_bus_reg(.in(W_bus),        .out(bus_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),      .out(stall_out),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      
+
       assign rs        = rs_rt_rd_out[8:6];
-      assign rt        = rs_rt_rd_out[5:3];
+      assign rt        = rs_rt_rd_out[5:3]; 
       assign rd        = rs_rt_rd_out[2:0];
+      assign rddata    = is_load ? D_out : O_out;
       assign nzp_in[2] = rddata[15];
       assign nzp_in[1] = &(~rddata);
       assign nzp_in[0] = ~rddata[15] && (|rddata);
-      assign rddata    = is_load ? D_out : O_out;
 
       Nbit_reg #(3) nzpreg(.in(nzp_in), .out(nzp), .clk(clk), .we(nzp_we), .gwe(gwe), .rst(rst)); 
       lc4_regfile registerfile(  .i_rs(rs),        .i_rt(rt),        .i_rd(rd),
