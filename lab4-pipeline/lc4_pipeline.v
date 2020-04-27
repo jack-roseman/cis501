@@ -198,7 +198,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       
 
       assign should_stall = X_is_load && (D_rd == D_rs || (D_rd == D_rt && ~D_is_store));	
-      assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush
+      assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush //TODO X_is_branch or M_is_branch or W_is_branch ??????
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
       assign i_alu_r1data = W_rd == M_rs ? W_O : (rd == M_rs ? rddata : M_A);
