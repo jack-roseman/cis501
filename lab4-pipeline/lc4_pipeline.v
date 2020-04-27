@@ -89,6 +89,10 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign W_rt =                 W_rs_rt_rd[5:3];
       assign W_rd =                 W_rs_rt_rd[2:0];
 
+      assign rs =                   rs_rt_rd_out[8:6];
+      assign rt =                   rs_rt_rd_out[5:3]; 
+      assign rd =                   rs_rt_rd_out[2:0];
+
       assign D_rs_re =              D_bus[8];
       assign D_rt_re =              D_bus[7];
       assign D_regfile_we =         D_bus[6];
@@ -129,19 +133,15 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign W_is_branch =          W_bus[1];
       assign W_is_control_insn =    W_bus[0];
 
-      assign rs_re               = bus_out[8];
-      assign rt_re               = bus_out[7];
-      assign regfile_we          = bus_out[6];
-      assign nzp_we              = bus_out[5];
-      assign select_pc_plus_one  = bus_out[4];
-      assign is_load             = bus_out[3];
-      assign is_store            = bus_out[2];
-      assign is_branch           = bus_out[1];
-      assign is_control_insn     = bus_out[0];
-
-      assign rs                  = rs_rt_rd_out[8:6];
-      assign rt                  = rs_rt_rd_out[5:3]; 
-      assign rd                  = rs_rt_rd_out[2:0];
+      assign rs_re =                bus_out[8];
+      assign rt_re =                bus_out[7];
+      assign regfile_we =           bus_out[6];
+      assign nzp_we =               bus_out[5];
+      assign select_pc_plus_one  =  bus_out[4];
+      assign is_load =              bus_out[3];
+      assign is_store =             bus_out[2];
+      assign is_branch =            bus_out[1];
+      assign is_control_insn =      bus_out[0];
  
       Nbit_reg #(16, 16'h8200) pc_reg (.in(next_pc), .out(pc), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
 
