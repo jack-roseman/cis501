@@ -190,8 +190,8 @@ module lc4_processor (input  wire        clk,                // Main clock
       
       Nbit_reg #(3) nzpreg(.in(nzp_in), .out(nzp), .clk(clk), .we(nzp_we), .gwe(gwe), .rst(rst)); 
 
-      assign should_stall = X_is_load && (D_rd == D_rs || (D_rd == D_rt && ~D_is_store));	
-      assign should_flush = (X_is_branch && ~(alu_result == next_pc)); //case in which we flush 
+      assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));	
+      assign should_flush = (M_is_branch && ~(alu_result == next_pc)); //case in which we flush 
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
       assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_O : (regfile_we && (rd == M_rs) ? rddata : M_A);
@@ -207,7 +207,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign nzp_in[1] = &(~rddata);
       assign nzp_in[0] = ~rddata[15] && (|rddata);
 
-      assign next_pc = should_flush ? alu_result : pc_plus_one ; //assume the next pc is pc+1
+      assign next_pc = should_flush ? alu_result : pc_plus_one; //assume the next pc is pc+1
 
       //SET OUTPUTS
       assign o_dmem_we = W_is_store;  // Data memory write enable
