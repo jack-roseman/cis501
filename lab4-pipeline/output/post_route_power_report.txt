@@ -1,8 +1,8 @@
 Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
-| Date             : Mon Apr 27 18:44:52 2020
-| Host             : mosh running 64-bit openSUSE Leap 15.1
+| Date             : Tue Apr 28 15:33:24 2020
+| Host             : disco running 64-bit openSUSE Leap 15.1
 | Command          : report_power -file ./output/post_route_power_report.txt
 | Design           : lc4_system
 | Device           : xc7z020clg484-1
@@ -33,7 +33,7 @@ Table of Contents
 | Total On-Chip Power (W)  | 0.255        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 0.144        |
+| Dynamic (W)              | 0.145        |
 | Device Static (W)        | 0.110        |
 | Effective TJA (C/W)      | 11.5         |
 | Max Ambient (C)          | 82.1         |
@@ -53,14 +53,14 @@ Table of Contents
 | On-Chip                 | Power (W) | Used     | Available | Utilization (%) |
 +-------------------------+-----------+----------+-----------+-----------------+
 | Clocks                  |     0.002 |        7 |       --- |             --- |
-| Slice Logic             |     0.002 |     2650 |       --- |             --- |
-|   LUT as Logic          |     0.002 |     1537 |     53200 |            2.89 |
-|   CARRY4                |    <0.001 |      122 |     13300 |            0.92 |
-|   Register              |    <0.001 |      545 |    106400 |            0.51 |
+| Slice Logic             |     0.002 |     2662 |       --- |             --- |
+|   LUT as Logic          |     0.002 |     1544 |     53200 |            2.90 |
+|   CARRY4                |    <0.001 |      120 |     13300 |            0.90 |
+|   Register              |    <0.001 |      550 |    106400 |            0.52 |
 |   F7/F8 Muxes           |    <0.001 |       40 |     53200 |            0.08 |
 |   LUT as Shift Register |    <0.001 |        2 |     17400 |            0.01 |
 |   Others                |     0.000 |       97 |       --- |             --- |
-| Signals                 |     0.002 |     2004 |       --- |             --- |
+| Signals                 |     0.002 |     2021 |       --- |             --- |
 | Block RAM               |     0.010 |     39.5 |       140 |           28.21 |
 | MMCM                    |     0.122 |        1 |         4 |           25.00 |
 | DSPs                    |    <0.001 |        1 |       220 |            0.45 |
@@ -76,7 +76,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) |
 +-----------+-------------+-----------+-------------+------------+
-| Vccint    |       1.000 |     0.024 |       0.015 |      0.009 |
+| Vccint    |       1.000 |     0.024 |       0.016 |      0.009 |
 | Vccaux    |       1.800 |     0.079 |       0.068 |      0.011 |
 | Vcco33    |       3.300 |     0.003 |       0.002 |      0.001 |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |
@@ -156,7 +156,7 @@ Table of Contents
 +--------------------------+-----------+
 | Name                     | Power (W) |
 +--------------------------+-----------+
-| lc4_system               |     0.144 |
+| lc4_system               |     0.145 |
 |   fake_kbd_inst          |    <0.001 |
 |     kbdr_reg             |    <0.001 |
 |     kbsr_reg             |    <0.001 |
@@ -186,6 +186,7 @@ Table of Contents
 |     MW_bus_reg           |    <0.001 |
 |     MW_data_reg          |    <0.001 |
 |     MW_rs_rt_rd_reg      |    <0.001 |
+|     M_nzp                |    <0.001 |
 |     WD_D_reg             |    <0.001 |
 |     WD_O_reg             |    <0.001 |
 |     WD_bus_reg           |     0.002 |
