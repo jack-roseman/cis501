@@ -51,7 +51,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       wire superscalar = 1'b0;
       wire should_flush, should_stall, is_WD_bypass;
       wire [1:0] hazard, D_stall, X_stall, M_stall, W_stall, stall_out;
-      wire [2:0] nzp_in, nzp, rd, nzp_out, w_nzp_out;
+      wire [2:0] nzp_in, nzp, rd, nzp_out, W_nzp;
       wire [15:0] D_insn, X_insn_in, X_insn, M_insn_in, M_insn, W_insn, insn_out, alu_result;
       wire [15:0] rsdata, rtdata, rddata, X_A, X_B, M_A, M_B, W_O, W_D, W_B, D_out, O_out, regfile_rsdata_out, regfile_rtdata_out;
       wire [15:0] i_alu_r1data, i_alu_r2data; //inputs to ALU 
@@ -173,7 +173,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign nzp_in[1] = &(~alu_result);
       assign nzp_in[0] = ~alu_result[15] && (|alu_result);
 
-	   Nbit_reg #(3, 3'b0)           M_nzp(.in(nzp_in),       .out(nzp_out),    .clk(clk), .we(M_bus[5]), .gwe(gwe), .rst(rst));
+	   Nbit_reg #(3, 3'b0)       M_nzp_reg(.in(nzp_in),       .out(W_nzp),    .clk(clk), .we(M_bus[5]), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)     MW_pc_reg(.in(M_pc),         .out(W_pc),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)   MW_insn_reg(.in(M_insn),       .out(W_insn),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(9, 9'b0) MW_rs_rt_rd_reg(.in(M_rs_rt_rd),   .out(W_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -182,7 +182,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(9, 9'b0)      MW_bus_reg(.in(M_bus),        .out(W_bus),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)   MW_data_reg(.in(M_data),       .out(W_data),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
-	   Nbit_reg #(3, 3'b0)           W_nzp(.in(nzp_out),      .out(w_nzp_out),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+	   Nbit_reg #(3, 3'b0)       W_nzp_reg(.in(W_nzp),        .out(nzp),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)     WD_pc_reg(.in(W_pc),         .out(pc_out),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)   WD_insn_reg(.in(W_insn),       .out(insn_out),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(9, 9'b0) WD_rs_rt_rd_reg(.in(W_rs_rt_rd),   .out(rs_rt_rd_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -197,7 +197,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       
       assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));	
-      assign should_flush = (M_is_branch && |(M_insn[11:9] & nzp_out)) || M_is_control_insn;
+      assign should_flush = (M_is_branch && |(M_insn[11:9] & W_nzp)) || M_is_control_insn;
 
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
@@ -224,7 +224,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign test_regfile_wsel = rd;  // Testbench: which register to write in the register file
       assign test_regfile_data = rddata;  // Testbench: value to write into the register file
       assign test_nzp_we       = nzp_we;     // Testbench: NZP condition codes write enable
-      assign test_nzp_new_bits = w_nzp_out;  // Testbench: value to write to NZP bits
+      assign test_nzp_new_bits = nzp;  // Testbench: value to write to NZP bits
       assign test_dmem_we      = o_dmem_we;       // Testbench: data memory write enable
       assign test_dmem_addr    = o_dmem_addr;     // Testbench: address to read/write memory
       assign test_dmem_data    = D_out;     // Testbench: value read/writen from/to memory 
