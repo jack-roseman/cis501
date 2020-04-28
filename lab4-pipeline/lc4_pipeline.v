@@ -197,7 +197,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       
       assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));	
-      assign should_flush = M_is_branch && (|(M_insn[11:9] & nzp_out));
+      assign should_flush = (M_is_branch && |(M_insn[11:9] & nzp_out)) || M_is_control_insn;
 
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
@@ -209,7 +209,7 @@ module lc4_processor (input  wire        clk,                // Main clock
 
 
       assign rd        = rs_rt_rd_out[2:0];
-      assign rddata    = is_load ? D_out : O_out;
+      assign rddata    = is_control_insn ? W_pc : (is_load ? D_out : O_out);
 
       assign next_pc = should_flush ? alu_result : pc_plus_one; //assume the next pc is pc+1
 
