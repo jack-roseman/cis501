@@ -166,23 +166,16 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(9, 9'b0)      XM_bus_reg(.in(X_bus),      .out(M_bus),      .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(16, 16'b0)   XM_data_reg(.in(X_data),     .out(M_data),     .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
 
-
       lc4_alu alu (.i_insn(M_insn), .i_pc(M_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
-	   assign nzp_in[2] = alu_result[15];
-      assign nzp_in[1] = &(~alu_result);
-      assign nzp_in[0] = ~alu_result[15] && (|alu_result);
+      Nbit_reg #(16, 16'b0)     MW_pc_reg(.in(M_pc),         .out(W_pc),       .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)   MW_insn_reg(.in(M_insn),       .out(W_insn),     .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
+      Nbit_reg #(9, 9'b0) MW_rs_rt_rd_reg(.in(M_rs_rt_rd),   .out(W_rs_rt_rd), .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)      MW_O_reg(.in(alu_result),   .out(W_O),        .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem data
+      Nbit_reg #(16, 16'b0)      MW_B_reg(.in(i_alu_r2data), .out(W_B),        .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem address
+      Nbit_reg #(9, 9'b0)      MW_bus_reg(.in(M_bus),        .out(W_bus),      .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)   MW_data_reg(.in(M_data),       .out(W_data),     .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
 
-	   Nbit_reg #(3, 3'b0)       M_nzp_reg(.in(nzp_in),       .out(W_nzp),    .clk(clk), .we(M_bus[5]), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)     MW_pc_reg(.in(M_pc),         .out(W_pc),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)   MW_insn_reg(.in(M_insn),       .out(W_insn),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(9, 9'b0) MW_rs_rt_rd_reg(.in(M_rs_rt_rd),   .out(W_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)      MW_O_reg(.in(alu_result),   .out(W_O),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
-      Nbit_reg #(16, 16'b0)      MW_B_reg(.in(i_alu_r2data), .out(W_B),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
-      Nbit_reg #(9, 9'b0)      MW_bus_reg(.in(M_bus),        .out(W_bus),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)   MW_data_reg(.in(M_data),       .out(W_data),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-
-	   Nbit_reg #(3, 3'b0)       W_nzp_reg(.in(W_nzp),        .out(nzp),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)     WD_pc_reg(.in(W_pc),         .out(pc_out),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)   WD_insn_reg(.in(W_insn),       .out(insn_out),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(9, 9'b0) WD_rs_rt_rd_reg(.in(W_rs_rt_rd),   .out(rs_rt_rd_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -190,23 +183,28 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      WD_D_reg(.in(W_data),       .out(D_out),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
       Nbit_reg #(9, 9'b0)      WD_bus_reg(.in(W_bus),        .out(bus_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
+      Nbit_reg #(3, 3'b0) M_nzp_reg(.in(nzp_in),  .out(W_nzp),  .clk(clk), .we(M_nzp_we), .gwe(gwe), .rst(rst));
+	   Nbit_reg #(3, 3'b0) W_nzp_reg(.in(W_nzp),   .out(nzp),    .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
 
       Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(hazard),     .out(X_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(M_stall),    .out(W_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       
-      assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));	
+      assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));
       assign should_flush = (M_is_branch && |(M_insn[11:9] & W_nzp)) || M_is_control_insn;
 
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
-      assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_O : (regfile_we && (rd == M_rs) ? rddata : M_A);
-      assign i_alu_r2data = W_regfile_we && (W_rd == M_rt) ? W_O : (regfile_we && (rd == M_rt) ? rddata : M_B);
-
       assign rsdata = regfile_we && (rd == X_rs) ? rddata : regfile_rsdata_out;
       assign rtdata = regfile_we && (rd == X_rt) ? rddata : regfile_rtdata_out;
 
+      assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_O : (regfile_we && (rd == M_rs) ? rddata : M_A);
+      assign i_alu_r2data = W_regfile_we && (W_rd == M_rt) ? W_O : (regfile_we && (rd == M_rt) ? rddata : M_B);
+
+      assign nzp_in[2] = alu_result[15];
+      assign nzp_in[1] = &(~alu_result);
+      assign nzp_in[0] = ~alu_result[15] && (|alu_result);
 
       assign rd        = rs_rt_rd_out[2:0];
       assign rddata    = is_control_insn ? W_pc : (is_load ? D_out : O_out);
