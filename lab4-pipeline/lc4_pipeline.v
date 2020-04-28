@@ -191,8 +191,8 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(9, 9'b0)      WD_bus_reg(.in(W_bus),        .out(bus_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
 
-      Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(hazard),     .out(X_stall),    .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_stall || should_flush || rst));
+      Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(hazard),     .out(X_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
+      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(M_stall),    .out(W_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       
