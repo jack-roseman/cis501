@@ -184,7 +184,7 @@ module lc4_processor (input  wire        clk,                // Main clock
 	   Nbit_reg #(3, 3'b0) W_nzp_reg(.in(W_nzp),   .out(nzp),    .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
 
       Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(hazard),     .out(X_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),    .out(M_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
+      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),     .out(M_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(M_stall),    .out(W_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
 
@@ -192,18 +192,20 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      MW_dmem_addr_reg(.in(M_dmem_addr),          .out(W_dmem_addr),  .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem address
       Nbit_reg #(16, 16'b0)      WD_dmem_addr_reg(.in(W_dmem_addr),          .out(dmem_addr_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
 
-      assign M_dmem_data = M_is_load ? i_cur_dmem_data : (M_is_store ? i_alu_r2data : 16'b0);
+      assign M_dmem_data = M_is_load ? i_cur_dmem_data : (M_is_store ? i_alu_r2data: 16'b0);
       Nbit_reg #(16, 16'b0)      MW_dmem_data_reg(.in(M_dmem_data),         .out(W_dmem_data),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)      WD_dmem_data_reg(.in(W_dmem_data),         .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
+      wire is_first_insn_through = (pc_out == 16'h8200);
       
-      assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));
+      //assign should_stall = (X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store)));
+      assign should_stall = M_is_load && (M_rd == X_rs || (M_rd == X_rt && ~X_is_store));
       assign should_flush = (M_is_branch && |(M_insn[11:9] & W_nzp)) || M_is_control_insn;
 
       assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
-      assign rsdata = regfile_we && (rd == X_rs) ? rddata : regfile_rsdata_out;
-      assign rtdata = regfile_we && (rd == X_rt) ? rddata : regfile_rtdata_out;
+      assign rsdata = W_regfile_we && (W_rd == X_rs) ? W_alu_result : (regfile_we && (rd == X_rs) ? rddata  : regfile_rsdata_out);
+      assign rtdata = W_regfile_we && (W_rd == X_rt) ? W_dmem_addr  : (regfile_we && (rd == X_rt) ? rddata : regfile_rtdata_out);
 
       assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_alu_result : (regfile_we && (rd == M_rs) ? rddata : M_A);
       assign i_alu_r2data = W_regfile_we && (W_rd == M_rt) ? W_alu_result : (regfile_we && (rd == M_rt) ? rddata : M_B);
