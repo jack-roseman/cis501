@@ -192,7 +192,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      MW_dmem_addr_reg(.in(M_dmem_addr),          .out(W_dmem_addr),  .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem address
       Nbit_reg #(16, 16'b0)      WD_dmem_addr_reg(.in(W_dmem_addr),          .out(dmem_addr_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
 
-      assign M_dmem_data = i_cur_dmem_data;
+      assign M_dmem_data = M_is_load ? i_cur_dmem_data : (M_is_store ? i_alu_r2data : 16'b0);
       Nbit_reg #(16, 16'b0)      MW_dmem_data_reg(.in(M_dmem_data),         .out(W_dmem_data),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)      WD_dmem_data_reg(.in(W_dmem_data),         .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
