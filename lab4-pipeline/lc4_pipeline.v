@@ -65,7 +65,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       wire W_rs_re, W_rt_re, W_regfile_we, W_nzp_we, W_select_pc_plus_one, W_is_load, W_is_store, W_is_branch, W_is_control_insn;
       wire rs_re, rt_re, regfile_we, nzp_we, select_pc_plus_one, is_load, is_store, is_branch, is_control_insn;
       wire [8:0] D_rs_rt_rd, X_rs_rt_rd, M_rs_rt_rd, W_rs_rt_rd, rs_rt_rd_out;
-      wire [15:0] W_dmem_data, W_dmem_addr, dmem_data_out, dmem_addr_out; 
+      wire [15:0] M_dmem_data, M_dmem_addr, W_dmem_data, W_dmem_addr, dmem_data_out, dmem_addr_out; 
       wire [8:0] D_bus, X_bus, M_bus, W_bus, bus_out;
       wire [15:0] pc, pc_plus_one, D_pc, X_pc, M_pc, W_pc, pc_out, next_pc, M_pc_plus_one;
  
@@ -150,7 +150,6 @@ module lc4_processor (input  wire        clk,                // Main clock
       
       Nbit_reg #(16, 16'b0)       DX_pc_reg(.in(pc),              .out(X_pc),       .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(16, 16'b0)     DX_insn_reg(.in(i_cur_insn),      .out(X_insn),     .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
-      //Nbit_reg #(16, 16'b0)     DX_data_reg(.in(i_cur_dmem_data), .out(X_data),     .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(9, 9'b0)   DX_rs_rt_rd_reg(.in(D_rs_rt_rd),      .out(X_rs_rt_rd), .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(9, 9'b0)        DX_bus_reg(.in(D_bus),           .out(X_bus),      .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       
@@ -164,7 +163,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      XM_A_reg(.in(rsdata),     .out(M_A),        .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst)); 
       Nbit_reg #(16, 16'b0)      XM_B_reg(.in(rtdata),     .out(M_B),        .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
       Nbit_reg #(9, 9'b0)      XM_bus_reg(.in(X_bus),      .out(M_bus),      .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
-      //Nbit_reg #(16, 16'b0)   XM_data_reg(.in(i_cur_dmem_data),     .out(M_data),     .clk(clk), .we(1'b1),    .gwe(gwe), .rst(should_flush || should_stall || rst));
+     
 
       lc4_alu alu (.i_insn(M_insn), .i_pc(M_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
 
@@ -189,15 +188,13 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(M_stall),    .out(W_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
 
+      assign M_dmem_addr = M_is_store || M_is_load ? alu_result : 16'b0;
+      Nbit_reg #(16, 16'b0)      MW_dmem_addr_reg(.in(M_dmem_addr),          .out(W_dmem_addr),  .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem address
+      Nbit_reg #(16, 16'b0)      WD_dmem_addr_reg(.in(W_dmem_addr),          .out(dmem_addr_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
 
-
-      Nbit_reg #(16, 16'b0)      data_reg1(.in(i_cur_dmem_data),   .out(W_dmem_data),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)      data_reg2(.in(W_dmem_data),       .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
-
-
-      assign o_dmem_addr = M_is_store || M_is_load ? alu_result : 16'b0;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
-      Nbit_reg #(16, 16'b0)      MW_B_reg(.in(o_dmem_addr),          .out(W_dmem_addr),  .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem address
-      Nbit_reg #(16, 16'b0)      addr_reg(.in(W_dmem_addr),          .out(dmem_addr_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
+      assign M_dmem_data = i_cur_dmem_data;
+      Nbit_reg #(16, 16'b0)      MW_dmem_data_reg(.in(M_dmem_data),         .out(W_dmem_data),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)      WD_dmem_data_reg(.in(W_dmem_data),         .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
       
       assign should_stall = X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store));
@@ -221,8 +218,10 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign next_pc = should_flush ? alu_result : pc_plus_one; //assume the next pc is pc+1
       
       //SET OUTPUTS
+      //assign o_dmem_addr = W_dmem_addr;
       assign o_dmem_we = M_is_store;  // Data memory write enable
-      assign o_dmem_towrite = W_dmem_data;
+      assign o_dmem_addr = M_dmem_addr;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
+      assign o_dmem_towrite = M_dmem_data;
       assign o_cur_pc = pc;
       
       //SET TESTING PINS - 
@@ -257,12 +256,12 @@ module lc4_processor (input  wire        clk,                // Main clock
    always @(posedge gwe) begin
       $display("%d CURR_PC=%h, D_INSN=%h X_INSN=%h, M_INSN=%h, W_INSN=%h, INSN-%h", $time, pc_out, i_cur_insn, X_insn, M_insn, W_insn, insn_out);
 
-      if(is_load)
-         $display("%d LOAD R%d <= %h from ADDR: %h ", $time, rd, dmem_data_out, dmem_addr_out);
+      if(W_is_load)
+         $display("%d LOAD R%d <= %h from ADDR: %h ", $time, W_rd, W_dmem_data, W_dmem_addr);
 
          
-      if (M_is_store)
-        $display("%d STORE %h <= %h", $time, o_dmem_addr, o_dmem_towrite);
+      if (W_is_store)
+        $display("%d STORE %h <= %h", $time, W_dmem_addr, W_dmem_data);
 
       // Start each $display() format string with a %d argument for time
       // it will make the output easier to read.  Use %b, %h, and %d
