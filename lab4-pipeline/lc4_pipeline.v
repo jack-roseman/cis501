@@ -192,7 +192,7 @@ module lc4_processor (input  wire        clk,                // Main clock
 
 
       Nbit_reg #(16, 16'b0)      data_reg1(.in(i_cur_dmem_data),   .out(W_dmem_data),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)      data_reg2(.in(W_dmem_data),         .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
+      Nbit_reg #(16, 16'b0)      data_reg2(.in(W_dmem_data),       .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
 
       assign o_dmem_addr = M_is_store || M_is_load ? alu_result : 16'b0;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
@@ -219,13 +219,12 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign rddata    = is_control_insn ? W_pc : (is_load ? dmem_data_out : alu_result_out);
 
       assign next_pc = should_flush ? alu_result : pc_plus_one; //assume the next pc is pc+1
-
       
       //SET OUTPUTS
       assign o_dmem_we = M_is_store;  // Data memory write enable
       assign o_dmem_towrite = W_dmem_data;
       assign o_cur_pc = pc;
-
+      
       //SET TESTING PINS - 
       assign test_regfile_we   = regfile_we;    // Testbench: register file write enable
       assign test_regfile_wsel = rd;  // Testbench: which register to write in the register file
@@ -262,7 +261,7 @@ module lc4_processor (input  wire        clk,                // Main clock
          $display("%d LOAD R%d <= %h from ADDR: %h ", $time, rd, dmem_data_out, dmem_addr_out);
 
          
-      if (o_dmem_we)
+      if (M_is_store)
         $display("%d STORE %h <= %h", $time, o_dmem_addr, o_dmem_towrite);
 
       // Start each $display() format string with a %d argument for time
