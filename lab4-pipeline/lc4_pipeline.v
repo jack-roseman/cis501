@@ -218,7 +218,6 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign next_pc = should_flush ? alu_result : pc_plus_one; //assume the next pc is pc+1
       
       //SET OUTPUTS
-      //assign o_dmem_addr = W_dmem_addr;
       assign o_dmem_we = M_is_store;  // Data memory write enable
       assign o_dmem_addr = M_dmem_addr;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
       assign o_dmem_towrite = M_dmem_data;
