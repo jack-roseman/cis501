@@ -170,7 +170,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(9, 9'b0)      WD_bus_reg(.in(W_bus),        .out(bus_out),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
       Nbit_reg #(3, 3'b0) M_nzp_reg(.in(nzp_in),  .out(W_nzp),  .clk(clk), .we(M_nzp_we), .gwe(gwe), .rst(rst));
-	   Nbit_reg #(3, 3'b0) W_nzp_reg(.in(W_nzp),   .out(nzp),    .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
+	   Nbit_reg #(3, 3'b0) W_nzp_reg(.in(W_nzp),   .out(nzp),    .clk(clk), .we(W_nzp_we), .gwe(gwe), .rst(rst));
 
       assign M_dmem_addr = M_is_store || M_is_load ? alu_result : 16'b0;
       Nbit_reg #(16, 16'b0) MW_dmem_addr_reg(.in(M_dmem_addr), .out(W_dmem_addr),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
@@ -191,9 +191,10 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_alu_result : (regfile_we && (rd == M_rs) ? rddata : M_A);
       assign i_alu_r2data = W_regfile_we && (W_rd == M_rt) ? W_alu_result : (regfile_we && (rd == M_rt) ? rddata : M_B);
 
-      assign nzp_in[2] = alu_result[15];
-      assign nzp_in[1] = &(~alu_result);
-      assign nzp_in[0] = ~alu_result[15] && (|alu_result);
+      wire [15:0] nzp_data = M_is_load ? M_dmem_data : alu_result;
+      assign nzp_in[2] = nzp_data[15];
+      assign nzp_in[1] = &(~nzp_data);
+      assign nzp_in[0] = ~nzp_data[15] && (|nzp_data);
 
       assign rd        = rs_rt_rd_out[2:0];
       assign rddata    = is_control_insn ? W_pc : (is_load ? dmem_data_out : alu_result_out);
