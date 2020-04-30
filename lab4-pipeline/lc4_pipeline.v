@@ -191,7 +191,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_alu_result : (regfile_we && (rd == M_rs) ? rddata : M_A);
       assign i_alu_r2data = W_regfile_we && (W_rd == M_rt) ? W_alu_result : (regfile_we && (rd == M_rt) ? rddata : M_B);
 
-      wire [15:0] nzp_data = M_is_load ? M_dmem_data : alu_result;
+      wire [15:0] nzp_data = M_is_control_insn ? X_pc : (M_is_load ? M_dmem_data : alu_result);
       assign nzp_in[2] = nzp_data[15];
       assign nzp_in[1] = &(~nzp_data);
       assign nzp_in[0] = ~nzp_data[15] && (|nzp_data);
