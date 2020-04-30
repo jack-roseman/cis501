@@ -239,12 +239,12 @@ module lc4_processor (input  wire        clk,                // Main clock
    always @(posedge gwe) begin
       $display("%d CURR_PC=%h, D_INSN=%h X_INSN=%h, M_INSN=%h, W_INSN=%h, INSN-%h", $time, pc_out, i_cur_insn, X_insn, M_insn, W_insn, insn_out);
 
-      if(W_is_load)
-         $display("%d LOAD R%d <= %h from ADDR: %h ", $time, W_rd, W_dmem_data, W_dmem_addr);
+      // if(W_is_load)
+      //    $display("%d LOAD R%d <= %h from ADDR: %h ", $time, W_rd, W_dmem_data, W_dmem_addr);
 
          
-      if (W_is_store)
-        $display("%d STORE %h <= %h", $time, W_dmem_addr, W_dmem_data);
+      // if (W_is_store)
+      //   $display("%d STORE %h <= %h", $time, W_dmem_addr, W_dmem_data);
 
 
       // Start each $display() format string with a %d argument for time
