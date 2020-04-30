@@ -70,10 +70,6 @@ module lc4_processor (input  wire        clk,                // Main clock
       wire [15:0] pc, pc_plus_one, D_pc, X_pc, M_pc, W_pc, pc_out, next_pc, M_pc_plus_one;
  
       //rsre (8), rtre (7), regfilewe (6), nzpwe (5), selectpcplusone (4), isload (3), isstore (2), isbranch (1), iscontrolinsn (0)
-      assign D_rs =                 D_rs_rt_rd[8:6];
-      assign D_rt =                 D_rs_rt_rd[5:3];
-      assign D_rd =                 D_rs_rt_rd[2:0];
-
       assign X_rs =                 X_rs_rt_rd[8:6];
       assign X_rt =                 X_rs_rt_rd[5:3];
       assign X_rd =                 X_rs_rt_rd[2:0];
@@ -85,16 +81,6 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign W_rs =                 W_rs_rt_rd[8:6];
       assign W_rt =                 W_rs_rt_rd[5:3];
       assign W_rd =                 W_rs_rt_rd[2:0];
-
-      assign D_rs_re =              D_bus[8];
-      assign D_rt_re =              D_bus[7];
-      assign D_regfile_we =         D_bus[6];
-      assign D_nzp_we =             D_bus[5];
-      assign D_select_pc_plus_one = D_bus[4];
-      assign D_is_load =            D_bus[3];
-      assign D_is_store =           D_bus[2];
-      assign D_is_branch =          D_bus[1];
-      assign D_is_control_insn =    D_bus[0];
 
       assign X_rs_re =              X_bus[8];
       assign X_rt_re =              X_bus[7];
@@ -135,29 +121,34 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign is_store =             bus_out[2];
       assign is_branch =            bus_out[1];
       assign is_control_insn =      bus_out[0];
- 
+
+      wire [1:0] stall_in = should_flush ? 2'b10 : 2'b00;
+      Nbit_reg #(2, 2'b10)   FD_stall_reg(.in(stall_in),     .out(X_stall),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      wire [1:0] stall_x = X_stall == 2'b10 ? 2'b10 : (should_stall ? 2'b11 : (should_flush ? 2'b10 : 2'b00));
+      Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(stall_x),     .out(M_stall),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(M_stall),      .out(W_stall),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(W_stall),     .out(stall_out),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+
       Nbit_reg #(16, 16'h8200) pc_reg (.in(next_pc), .out(pc), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
 
       cla16 add_one(.a(pc), .b(16'b0), .cin(1'b1), .sum(pc_plus_one)); //assume the next instruction for the current decoded insn is pc + 1
       
-      //DECODE INSTRUCTION GOING INTO EXECUTE STAGE
-      lc4_decoder dec(  .insn(i_cur_insn),
-                        .r1sel(D_rs_rt_rd[8:6]), .r1re(D_bus[8]),
-                        .r2sel(D_rs_rt_rd[5:3]), .r2re(D_bus[7]), 
-                        .wsel (D_rs_rt_rd[2:0]), .regfile_we(D_bus[6]),
-                        .nzp_we(D_bus[5]),       .select_pc_plus_one(D_bus[4]), 
-                        .is_load(D_bus[3]),      .is_store(D_bus[2]), 
-                        .is_branch(D_bus[1]),    .is_control_insn(D_bus[0]));
-      
       Nbit_reg #(16, 16'b0)       DX_pc_reg(.in(pc),         .out(X_pc),       .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
       Nbit_reg #(16, 16'b0)     DX_insn_reg(.in(i_cur_insn), .out(X_insn),     .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(9, 9'b0)   DX_rs_rt_rd_reg(.in(D_rs_rt_rd), .out(X_rs_rt_rd), .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(9, 9'b0)        DX_bus_reg(.in(D_bus),      .out(X_bus),      .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
+
       
+      lc4_decoder dec(  .insn(X_insn),
+                        .r1sel(X_rs_rt_rd[8:6]), .r1re(X_bus[8]),
+                        .r2sel(X_rs_rt_rd[5:3]), .r2re(X_bus[7]), 
+                        .wsel (X_rs_rt_rd[2:0]), .regfile_we(X_bus[6]),
+                        .nzp_we(X_bus[5]),       .select_pc_plus_one(X_bus[4]), 
+                        .is_load(X_bus[3]),      .is_store(X_bus[2]), 
+                        .is_branch(X_bus[1]),    .is_control_insn(X_bus[0]));
+
       lc4_regfile registerfile(  .i_rs(X_rs),                      .i_rt(X_rt),                    .i_rd(rd),
                                  .o_rs_data(regfile_rsdata_out),   .o_rt_data(regfile_rtdata_out), .i_wdata(rddata), .i_rd_we(regfile_we),
                                  .clk(clk), .gwe(gwe), .rst(rst)); 
-      
+                        
       Nbit_reg #(16, 16'b0)     XM_pc_reg(.in(X_pc),       .out(M_pc),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_stall || rst));
       Nbit_reg #(16, 16'b0)   XM_insn_reg(.in(X_insn),     .out(M_insn),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_stall || rst));
       Nbit_reg #(9, 9'b0) XM_rs_rt_rd_reg(.in(X_rs_rt_rd), .out(M_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || should_stall || rst));
@@ -184,10 +175,6 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(3, 3'b0) M_nzp_reg(.in(nzp_in),  .out(W_nzp),  .clk(clk), .we(M_nzp_we), .gwe(gwe), .rst(rst));
 	   Nbit_reg #(3, 3'b0) W_nzp_reg(.in(W_nzp),   .out(nzp),    .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst));
 
-      Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(hazard),     .out(X_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(X_stall),     .out(M_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(M_stall),    .out(W_stall),    .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   WD_stall_reg(.in(W_stall),    .out(stall_out),  .clk(clk), .we(1'b1),          .gwe(gwe), .rst(rst));
 
       assign M_dmem_addr = M_is_store || M_is_load ? alu_result : 16'b0;
       Nbit_reg #(16, 16'b0)      MW_dmem_addr_reg(.in(M_dmem_addr),          .out(W_dmem_addr),  .clk(clk), .we(1'b1),     .gwe(gwe), .rst(rst)); //Holds dmem address
@@ -197,13 +184,11 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0)      MW_dmem_data_reg(.in(M_dmem_data),         .out(W_dmem_data),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)      WD_dmem_data_reg(.in(W_dmem_data),         .out(dmem_data_out),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
-      wire is_first_insn_through = (pc_out == 16'h8200);
+      //wire is_first_insn_through = (pc_out == 16'h8200);
       
       //assign should_stall = (X_is_load && (X_rd == D_rs || (X_rd == D_rt && ~D_is_store)));
       assign should_stall = M_is_load && (M_rd == X_rs || (M_rd == X_rt && ~X_is_store));
       assign should_flush = (M_is_branch && |(M_insn[11:9] & W_nzp)) || M_is_control_insn;
-
-      assign hazard = should_stall ? 2'b11 : (superscalar ? 2'b01 : (should_flush ? 2'b10 : 2'b00));
 
       assign rsdata = W_regfile_we && (W_rd == X_rs) ? W_alu_result : (regfile_we && (rd == X_rs) ? rddata : regfile_rsdata_out);
       assign rtdata = W_regfile_we && (W_rd == X_rt) ? W_dmem_addr  : (regfile_we && (rd == X_rt) ? rddata : regfile_rtdata_out);
@@ -218,7 +203,7 @@ module lc4_processor (input  wire        clk,                // Main clock
       assign rd        = rs_rt_rd_out[2:0];
       assign rddata    = is_control_insn ? W_pc : (is_load ? dmem_data_out : alu_result_out);
 
-      assign next_pc = should_flush ? alu_result : pc_plus_one; //assume the next pc is pc+1
+      assign next_pc = should_flush ? alu_result : (should_stall ? pc : pc_plus_one); //assume the next pc is pc+1
       
       //SET OUTPUTS
       assign o_dmem_we = M_is_store;  // Data memory write enable
