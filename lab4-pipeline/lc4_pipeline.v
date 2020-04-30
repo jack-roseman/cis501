@@ -181,9 +181,8 @@ module lc4_processor (input  wire        clk,                // Main clock
       Nbit_reg #(16, 16'b0) MW_dmem_data_reg(.in(M_dmem_data), .out(W_dmem_data),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0) WD_dmem_data_reg(.in(W_dmem_data), .out(dmem_data_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
-      //wire is_first_insn_through = (pc_out == 16'h8200);
-      
-      assign should_stall = M_is_load && (M_rd == X_rs || (M_rd == X_rt && ~X_is_store && ~M_is_load) || X_is_branch); //TODO not right but it works
+      wire is_load_to_use = (M_is_load && M_rd == X_rs && X_rs_re) || (M_is_load && ~X_is_store && ~X_is_load && M_rd == X_rt && X_rt_re);
+      assign should_stall = is_load_to_use || (M_is_load && X_is_branch);
       assign should_flush = (M_is_branch && |(M_insn[11:9] & W_nzp)) || M_is_control_insn;
 
       assign rsdata = W_regfile_we && (W_rd == X_rs) ? W_dmem_data :  (regfile_we && (rd == X_rs) ? rddata : regfile_rsdata_out);
