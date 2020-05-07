@@ -59,9 +59,9 @@ module lc4_regfile_ss #(parameter n = 16)
    Nbit_reg #(n) r_6(.in(i_wdata), .clk(clk), .we(dest == 3'b110 & (i_rd_we_A || i_rd_we_B)), .gwe(gwe), .rst(rst), .out(r6));
    Nbit_reg #(n) r_7(.in(i_wdata), .clk(clk), .we(dest == 3'b111 & (i_rd_we_A || i_rd_we_B)), .gwe(gwe), .rst(rst), .out(r7));
    
-   assign o_rs_data_A = i_rs_A == dest ? i_wdata : (i_rs_A == 3'b000 ? r0 : (i_rs_A == 3'b001 ? r1 :  (i_rs_A == 3'b010 ? r2 : (i_rs_A == 3'b011 ? r3 : (i_rs_A == 3'b100 ? r4 : (i_rs_A == 3'b101 ? r5 : (i_rs_A == 3'b110 ? r6 : r7)))))));
-   assign o_rs_data_B = i_rs_B == dest ? i_wdata : (i_rs_B == 3'b000 ? r0 : (i_rs_B == 3'b001 ? r1 :  (i_rs_B == 3'b010 ? r2 : (i_rs_B == 3'b011 ? r3 : (i_rs_B == 3'b100 ? r4 : (i_rs_B == 3'b101 ? r5 : (i_rs_B == 3'b110 ? r6 : r7)))))));
-   assign o_rt_data_A = i_rt_A == dest ? i_wdata : (i_rt_A == 3'b000 ? r0 : (i_rt_A == 3'b001 ? r1 :  (i_rt_A == 3'b010 ? r2 : (i_rt_A == 3'b011 ? r3 : (i_rt_A == 3'b100 ? r4 : (i_rt_A == 3'b101 ? r5 : (i_rt_A == 3'b110 ? r6 : r7)))))));
-   assign o_rt_data_B = i_rt_B == dest ? i_wdata : (i_rt_B == 3'b000 ? r0 : (i_rt_B == 3'b001 ? r1 :  (i_rt_B == 3'b010 ? r2 : (i_rt_B == 3'b011 ? r3 : (i_rt_B == 3'b100 ? r4 : (i_rt_B == 3'b101 ? r5 : (i_rt_B == 3'b110 ? r6 : r7)))))));
+   assign o_rs_data_A = (i_rs_A == dest && ~(being_written == 2'b10)) ? i_wdata : (i_rs_A == 3'b000 ? r0 : (i_rs_A == 3'b001 ? r1 :  (i_rs_A == 3'b010 ? r2 : (i_rs_A == 3'b011 ? r3 : (i_rs_A == 3'b100 ? r4 : (i_rs_A == 3'b101 ? r5 : (i_rs_A == 3'b110 ? r6 : r7)))))));
+   assign o_rs_data_B = (i_rs_A == dest && ~(being_written == 2'b10)) ? i_wdata : (i_rs_B == 3'b000 ? r0 : (i_rs_B == 3'b001 ? r1 :  (i_rs_B == 3'b010 ? r2 : (i_rs_B == 3'b011 ? r3 : (i_rs_B == 3'b100 ? r4 : (i_rs_B == 3'b101 ? r5 : (i_rs_B == 3'b110 ? r6 : r7)))))));
+   assign o_rt_data_A = (i_rs_A == dest && ~(being_written == 2'b10)) ? i_wdata : (i_rt_A == 3'b000 ? r0 : (i_rt_A == 3'b001 ? r1 :  (i_rt_A == 3'b010 ? r2 : (i_rt_A == 3'b011 ? r3 : (i_rt_A == 3'b100 ? r4 : (i_rt_A == 3'b101 ? r5 : (i_rt_A == 3'b110 ? r6 : r7)))))));
+   assign o_rt_data_B = (i_rs_A == dest && ~(being_written == 2'b10)) ? i_wdata : (i_rt_B == 3'b000 ? r0 : (i_rt_B == 3'b001 ? r1 :  (i_rt_B == 3'b010 ? r2 : (i_rt_B == 3'b011 ? r3 : (i_rt_B == 3'b100 ? r4 : (i_rt_B == 3'b101 ? r5 : (i_rt_B == 3'b110 ? r6 : r7)))))));
    
 endmodule
