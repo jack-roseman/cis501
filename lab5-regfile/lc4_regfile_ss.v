@@ -75,19 +75,8 @@ module lc4_regfile_ss #(parameter n = 16)
 
       //$display("%d Inputs: \t rd - R%d, R%d \n\t\t\t\t rs - R%d, R%d \n\t\t\t\t rt - R%d, R%d \n", $time, i_rd_A, i_rd_B, i_rs_A, i_rs_B, i_rt_A, i_rt_B);
       $display("%d \t R0 %h \n\t\t\t R1 %h \n\t\t\t R2 %h \n\t\t\t R3 %h \n\t\t\t R4 %h \n\t\t\t R5 %h \n\t\t\t R6 %h \n\t\t\t R7 %h \n", $time, r0, r1, r2, r3, r4, r5, r6, r7);
-      
-   
 
-      $display("%d rs_A Read R%d => %h", $time, i_rs_A, o_rs_data_A);
-      $display("%d rt_A Read R%d => %h", $time, i_rt_A, o_rt_data_A);
-
-      $display("%d rs_B Read R%d => %h", $time, i_rs_B, o_rs_data_B);
-      $display("%d rt_B Read R%d => %h", $time, i_rt_B, o_rt_data_B);
-
-      if (i_rd_A == i_rd_B && i_rd_we_A && i_rd_we_B) begin
-         $display("%d Write to R%d and R%d at the same time", $time, i_rd_A, i_rd_B);
-      end
-      if (i_rd_A && i_rd_we_A) begin
+      if (i_rd_we_A) begin
          $display("%d Write R%d <= %h", $time, i_rd_A, i_wdata_A);
 
          if (i_rs_A == i_rd_A || i_rs_A == i_rd_B) begin
@@ -98,7 +87,8 @@ module lc4_regfile_ss #(parameter n = 16)
             $display("%d rt_A Bypass Needed", $time);
          end
       end
-      if (i_rd_B && i_rd_we_B) begin
+
+      if (i_rd_we_B) begin
           $display("%d Write R%d <= %h", $time, i_rd_B, i_wdata_B);
           if (i_rs_B == i_rd_A || i_rs_B == i_rd_B) begin
             $display("%d rs_B Bypass", $time);
@@ -109,6 +99,15 @@ module lc4_regfile_ss #(parameter n = 16)
          end
       end
 
+      $display("%d rs_A Read R%d => %h", $time, i_rs_A, o_rs_data_A);
+      $display("%d rt_A Read R%d => %h", $time, i_rt_A, o_rt_data_A);
+
+      $display("%d rs_B Read R%d => %h", $time, i_rs_B, o_rs_data_B);
+      $display("%d rt_B Read R%d => %h", $time, i_rt_B, o_rt_data_B);
+      
+      if (i_rd_A == i_rd_B && i_rd_we_A && i_rd_we_B) begin
+         $display("%d Two writes to the same register R%d at the same time", $time, i_rd_A);
+      end
 
       // Start each $display() format string with a %d argument for time
       // it will make the output easier to read.  Use %b, %h, and %d
