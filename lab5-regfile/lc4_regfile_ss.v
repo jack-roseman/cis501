@@ -39,20 +39,37 @@ module lc4_regfile_ss #(parameter n = 16)
     input  wire          i_rd_we_B   // pipe B: write enable
     );
 
-   wire should_write_A = ~(i_rd_A == i_rd_B);
-   wire should_write_B = (i_rd_A == i_rd_B);
+   wire[n-1:0] i_wdata;
 
-   
+   //00 is A 01 is B 10 is nothing
+   wire write = i_rd_we_B || i_rd_we_A ? 1'b1 : 1'b0;
+   wire[1:0] being_written = i_rd_we_B ? 2'b01 : (i_rd_we_A ? 2'b00 : 2'b10);
 
-   lc4_regfile c1(.clk(clk), .gwe(gwe), .rst(rst), 
-                  .i_rd(i_rd_A), .i_rd_we(i_rd_we_A), .i_wdata(i_wdata_A),
-                  .i_rs(i_rs_A), .i_rt(i_rt_A),
-                  .o_rs_data(o_rs_data_A), .o_rt_data(o_rt_data_A));
+   wire[2:0] dest = being_written == 2'b00 ? i_rd_A : i_rd_B;
+
+   wire a_rs_bypass = i_rs_A == dest ? 1'b1 : 1'b0;
+   wire b_rs_bypass = i_rs_B == dest ? 1'b1 : 1'b0;
+   wire a_rt_bypass = i_rt_A == dest ? 1'b1 : 1'b0;
+   wire b_rt_bypass = i_rt_B == dest ? 1'b1 : 1'b0;
+
+   assign i_wdata = being_written == 2'b00 ? i_wdata_A : i_wdata_B;
+
+   wire [n-1:0] r0, r1, r2, r3, r4, r5, r6, r7;
    
-   lc4_regfile c2(.clk(clk), .gwe(gwe), .rst(rst), 
-                  .i_rd(i_rd_B), .i_rd_we(i_rd_we_B), .i_wdata(i_wdata_B),
-                  .i_rs(i_rs_B), .i_rt(i_rt_B),
-                  .o_rs_data(o_rs_data_B), .o_rt_data(o_rt_data_B));
+   Nbit_reg #(n) r_0(.in(i_wdata), .clk(clk), .we(dest == 3'b000 & write), .gwe(gwe), .rst(rst), .out(r0));
+   Nbit_reg #(n) r_1(.in(i_wdata), .clk(clk), .we(dest == 3'b001 & write), .gwe(gwe), .rst(rst), .out(r1));
+   Nbit_reg #(n) r_2(.in(i_wdata), .clk(clk), .we(dest == 3'b010 & write), .gwe(gwe), .rst(rst), .out(r2));
+   Nbit_reg #(n) r_3(.in(i_wdata), .clk(clk), .we(dest == 3'b011 & write), .gwe(gwe), .rst(rst), .out(r3));
+   Nbit_reg #(n) r_4(.in(i_wdata), .clk(clk), .we(dest == 3'b100 & write), .gwe(gwe), .rst(rst), .out(r4));
+   Nbit_reg #(n) r_5(.in(i_wdata), .clk(clk), .we(dest == 3'b101 & write), .gwe(gwe), .rst(rst), .out(r5));
+   Nbit_reg #(n) r_6(.in(i_wdata), .clk(clk), .we(dest == 3'b110 & write), .gwe(gwe), .rst(rst), .out(r6));
+   Nbit_reg #(n) r_7(.in(i_wdata), .clk(clk), .we(dest == 3'b111 & write), .gwe(gwe), .rst(rst), .out(r7));
+   
+   assign o_rs_data_A = (a_rs_bypass && write) ? i_wdata : (i_rs_A == 3'b000 ? r0 : (i_rs_A == 3'b001 ? r1 :  (i_rs_A == 3'b010 ? r2 : (i_rs_A == 3'b011 ? r3 : (i_rs_A == 3'b100 ? r4 : (i_rs_A == 3'b101 ? r5 : (i_rs_A == 3'b110 ? r6 : r7)))))));
+   assign o_rs_data_B = (b_rs_bypass && write) ? i_wdata : (i_rs_B == 3'b000 ? r0 : (i_rs_B == 3'b001 ? r1 :  (i_rs_B == 3'b010 ? r2 : (i_rs_B == 3'b011 ? r3 : (i_rs_B == 3'b100 ? r4 : (i_rs_B == 3'b101 ? r5 : (i_rs_B == 3'b110 ? r6 : r7)))))));
+   assign o_rt_data_A = (a_rt_bypass && write) ? i_wdata : (i_rt_A == 3'b000 ? r0 : (i_rt_A == 3'b001 ? r1 :  (i_rt_A == 3'b010 ? r2 : (i_rt_A == 3'b011 ? r3 : (i_rt_A == 3'b100 ? r4 : (i_rt_A == 3'b101 ? r5 : (i_rt_A == 3'b110 ? r6 : r7)))))));
+   assign o_rt_data_B = (b_rt_bypass && write) ? i_wdata : (i_rt_B == 3'b000 ? r0 : (i_rt_B == 3'b001 ? r1 :  (i_rt_B == 3'b010 ? r2 : (i_rt_B == 3'b011 ? r3 : (i_rt_B == 3'b100 ? r4 : (i_rt_B == 3'b101 ? r5 : (i_rt_B == 3'b110 ? r6 : r7)))))));
+   
 endmodule
 
 
