@@ -19,6 +19,9 @@ module test_regfile;
    
    integer     input_file, output_file, errors, tests;
 
+    // Set this to non-zero to cause the testbench to halt at the first
+   // failure. Often useful when debugging.
+   integer     exit_at_first_failure = 1;
 
    // Global Inputs
    reg         rst;
@@ -155,8 +158,13 @@ module test_regfile;
             errors = errors + 1;
          end
          
-         #2;         
-         
+
+         #2; 
+
+         if (exit_at_first_failure && errors > 0) begin
+            $display("Ending at first failure!");
+            $finish;
+         end
       end // end while
       
       if (input_file) $fclose(input_file); 

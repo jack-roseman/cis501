@@ -47,10 +47,10 @@ module lc4_regfile_ss #(parameter n = 16)
 
    wire[2:0] dest = being_written == 2'b00 ? i_rd_A : i_rd_B;
 
-   wire a_rs_bypass = i_rs_A == dest ? 1'b1 : 1'b0;
-   wire b_rs_bypass = i_rs_B == dest ? 1'b1 : 1'b0;
-   wire a_rt_bypass = i_rt_A == dest ? 1'b1 : 1'b0;
-   wire b_rt_bypass = i_rt_B == dest ? 1'b1 : 1'b0;
+   wire rs_A_bypass = i_rs_A == dest ? 1'b1 : 1'b0;
+   wire rs_B_bypass = i_rs_B == dest ? 1'b1 : 1'b0;
+   wire rt_A_bypass = i_rt_A == dest ? 1'b1 : 1'b0;
+   wire rt_B_bypass = i_rt_B == dest ? 1'b1 : 1'b0;
 
    assign i_wdata = being_written == 2'b00 ? i_wdata_A : i_wdata_B;
 
@@ -65,11 +65,91 @@ module lc4_regfile_ss #(parameter n = 16)
    Nbit_reg #(n) r_6(.in(i_wdata), .clk(clk), .we(dest == 3'b110 & write), .gwe(gwe), .rst(rst), .out(r6));
    Nbit_reg #(n) r_7(.in(i_wdata), .clk(clk), .we(dest == 3'b111 & write), .gwe(gwe), .rst(rst), .out(r7));
    
-   assign o_rs_data_A = (a_rs_bypass && write) ? i_wdata : (i_rs_A == 3'b000 ? r0 : (i_rs_A == 3'b001 ? r1 :  (i_rs_A == 3'b010 ? r2 : (i_rs_A == 3'b011 ? r3 : (i_rs_A == 3'b100 ? r4 : (i_rs_A == 3'b101 ? r5 : (i_rs_A == 3'b110 ? r6 : r7)))))));
-   assign o_rs_data_B = (b_rs_bypass && write) ? i_wdata : (i_rs_B == 3'b000 ? r0 : (i_rs_B == 3'b001 ? r1 :  (i_rs_B == 3'b010 ? r2 : (i_rs_B == 3'b011 ? r3 : (i_rs_B == 3'b100 ? r4 : (i_rs_B == 3'b101 ? r5 : (i_rs_B == 3'b110 ? r6 : r7)))))));
-   assign o_rt_data_A = (a_rt_bypass && write) ? i_wdata : (i_rt_A == 3'b000 ? r0 : (i_rt_A == 3'b001 ? r1 :  (i_rt_A == 3'b010 ? r2 : (i_rt_A == 3'b011 ? r3 : (i_rt_A == 3'b100 ? r4 : (i_rt_A == 3'b101 ? r5 : (i_rt_A == 3'b110 ? r6 : r7)))))));
-   assign o_rt_data_B = (b_rt_bypass && write) ? i_wdata : (i_rt_B == 3'b000 ? r0 : (i_rt_B == 3'b001 ? r1 :  (i_rt_B == 3'b010 ? r2 : (i_rt_B == 3'b011 ? r3 : (i_rt_B == 3'b100 ? r4 : (i_rt_B == 3'b101 ? r5 : (i_rt_B == 3'b110 ? r6 : r7)))))));
+   assign o_rs_data_A = (rs_A_bypass && write) ? i_wdata : (i_rs_A == 3'b000 ? r0 : (i_rs_A == 3'b001 ? r1 :  (i_rs_A == 3'b010 ? r2 : (i_rs_A == 3'b011 ? r3 : (i_rs_A == 3'b100 ? r4 : (i_rs_A == 3'b101 ? r5 : (i_rs_A == 3'b110 ? r6 : r7)))))));
+   assign o_rs_data_B = (rs_B_bypass && write) ? i_wdata : (i_rs_B == 3'b000 ? r0 : (i_rs_B == 3'b001 ? r1 :  (i_rs_B == 3'b010 ? r2 : (i_rs_B == 3'b011 ? r3 : (i_rs_B == 3'b100 ? r4 : (i_rs_B == 3'b101 ? r5 : (i_rs_B == 3'b110 ? r6 : r7)))))));
+
+   assign o_rt_data_A = (rt_A_bypass && write) ? i_wdata : (i_rt_A == 3'b000 ? r0 : (i_rt_A == 3'b001 ? r1 :  (i_rt_A == 3'b010 ? r2 : (i_rt_A == 3'b011 ? r3 : (i_rt_A == 3'b100 ? r4 : (i_rt_A == 3'b101 ? r5 : (i_rt_A == 3'b110 ? r6 : r7)))))));
+   assign o_rt_data_B = (rt_B_bypass && write) ? i_wdata : (i_rt_B == 3'b000 ? r0 : (i_rt_B == 3'b001 ? r1 :  (i_rt_B == 3'b010 ? r2 : (i_rt_B == 3'b011 ? r3 : (i_rt_B == 3'b100 ? r4 : (i_rt_B == 3'b101 ? r5 : (i_rt_B == 3'b110 ? r6 : r7)))))));
    
+   always @(posedge clk) begin
+
+      //$display("%d Inputs: \t rd - R%d, R%d \n\t\t\t\t rs - R%d, R%d \n\t\t\t\t rt - R%d, R%d \n", $time, i_rd_A, i_rd_B, i_rs_A, i_rs_B, i_rt_A, i_rt_B);
+      $display("%d \t R0 %h \n\t\t\t R1 %h \n\t\t\t R2 %h \n\t\t\t R3 %h \n\t\t\t R4 %h \n\t\t\t R5 %h \n\t\t\t R6 %h \n\t\t\t R7 %h \n", $time, r0, r1, r2, r3, r4, r5, r6, r7);
+      
+   
+
+      $display("%d rs_A Read R%d => %h", $time, i_rs_A, o_rs_data_A);
+      $display("%d rt_A Read R%d => %h", $time, i_rt_A, o_rt_data_A);
+
+      $display("%d rs_B Read R%d => %h", $time, i_rs_B, o_rs_data_B);
+      $display("%d rt_B Read R%d => %h", $time, i_rt_B, o_rt_data_B);
+
+      if (i_rd_A == i_rd_B && i_rd_we_A && i_rd_we_B) begin
+         $display("%d Write to R%d and R%d at the same time", $time, i_rd_A, i_rd_B);
+      end
+      if (i_rd_A && i_rd_we_A) begin
+         $display("%d Write R%d <= %h", $time, i_rd_A, i_wdata_A);
+
+         if (i_rs_A == i_rd_A || i_rs_A == i_rd_B) begin
+         $display("%d rs_A Bypass Needed", $time, );
+         end
+
+         if (i_rt_A == i_rd_A || i_rt_A == i_rd_B) begin
+            $display("%d rt_A Bypass Needed", $time);
+         end
+      end
+      if (i_rd_B && i_rd_we_B) begin
+          $display("%d Write R%d <= %h", $time, i_rd_B, i_wdata_B);
+          if (i_rs_B == i_rd_A || i_rs_B == i_rd_B) begin
+            $display("%d rs_B Bypass", $time);
+         end
+
+         if (i_rt_B == i_rd_A || i_rt_B == i_rd_B) begin
+            $display("%d rt_B Bypass", $time);
+         end
+      end
+
+
+      // Start each $display() format string with a %d argument for time
+      // it will make the output easier to read.  Use %b, %h, and %d
+      // for binary, hex, and decimal output of additional variables.
+      // You do not need to add a \n at the end of your format string.
+      // $display("%d ...", $time);
+
+      // Try adding a $display() call that prints out the PCs of
+      // each pipeline stage in hex.  Then you can easily look up the
+      // instructions in the .asm files in test_data.
+
+      // basic if syntax:
+      // if (cond) begin
+      //    ...;
+      //    ...;
+      // end
+
+      // Set a breakpoint on the empty $display() below
+      // to step through your pipeline cycle-by-cycle.
+      // You'll need to rewind the simulation to start
+      // stepping from the beginning.
+
+      // You can also simulate for XXX ns, then set the
+      // breakpoint to start stepping midway through the
+      // testbench.  Use the $time printouts you added above (!)
+      // to figure out when your problem instruction first
+      // enters the fetch stage.  Rewind your simulation,
+      // run it for that many nano-seconds, then set
+      // the breakpoint.
+
+      // In the objects view, you can change the values to
+      // hexadecimal by selecting all signals (Ctrl-A),
+      // then right-click, and select Radix->Hexadecial.
+
+      // To see the values of wires within a module, select
+      // the module in the hierarchy in the "Scopes" pane.
+      // The Objects pane will update to display the wires
+      // in that module.
+
+      $display();
+   end
 endmodule
 
 
