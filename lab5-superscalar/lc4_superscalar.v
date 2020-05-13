@@ -311,13 +311,18 @@ module lc4_processor(input wire         clk,             // main clock
 	   Nbit_reg #(3, 3'b0) W_nzp_reg_B(.in(W_nzp_B),   .out(nzp_B),    .clk(clk), .we(W_nzp_we_B), .gwe(gwe), .rst(rst));
 
 
+      assign M_dmem_addr_A = M_is_store_A || M_is_load_A ? alu_result_A : 16'b0;
+      Nbit_reg #(16, 16'b0) MW_dmem_addr_regA(.in(M_dmem_addr_A), .out(W_dmem_addr_A),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
+      Nbit_reg #(16, 16'b0) WD_dmem_addr_regA(.in(W_dmem_addr_A), .out(dmem_addr_out_A), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
 
       assign M_dmem_addr_B = M_is_store_B || M_is_load_B ? alu_result_B : 16'b0;
       Nbit_reg #(16, 16'b0) MW_dmem_addr_regB(.in(M_dmem_addr_B), .out(W_dmem_addr_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
       Nbit_reg #(16, 16'b0) WD_dmem_addr_regB(.in(W_dmem_addr_B), .out(dmem_addr_out_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
 
-      wire is_load_to_store_B = W_is_load_B && M_is_store_B && W_rd_B == M_rt_B;
-      assign M_dmem_data_B = is_load_to_store_B ? W_dmem_data_B : (M_is_load_B ? i_cur_dmem_data : (M_is_store_B ? i_alu_r2data_B: 16'b0));
+   
+      Nbit_reg #(16, 16'b0) MW_dmem_data_regA(.in(M_dmem_data_A), .out(W_dmem_data_A),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0) WD_dmem_data_regA(.in(W_dmem_data_A), .out(dmem_data_out_A), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
+
       Nbit_reg #(16, 16'b0) MW_dmem_data_regB(.in(M_dmem_data_B), .out(W_dmem_data_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0) WD_dmem_data_regB(.in(W_dmem_data_B), .out(dmem_data_out_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
 
@@ -330,9 +335,9 @@ module lc4_processor(input wire         clk,             // main clock
 
 
 
+      reg [1:0] stall_in_A;// = should_flush_A ? 2'b10 : 2'b00;
+      reg [1:0] stall_in_B;// = should_flush_B ? 2'b10 : 2'b00;
 
-
-      reg [1:0] stall_in_A, stall_in_B;
       reg [1:0] stall_x_A, stall_x_B;
       Nbit_reg #(2, 2'b10)   FD_stall_regA(.in(stall_in_A),     .out(X_stall_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(2, 2'b10)   DX_stall_regA(.in(stall_x_A),     .out(M_stall_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -358,69 +363,97 @@ module lc4_processor(input wire         clk,             // main clock
       wire is_XB_LTU = is_XB_LTU_within_pipe || is_XB_LTU_across_pipes;
 
       // (3) Dependence from X.A to X.B (including the case where X.A is a load)
-      wire is_XA_or_XB_LTU = (X_is_load_B && ((X_rd_B == X_rs_A && X_rs_re_A) || (X_rd_B == X_rt_A && X_rt_re_A && ~X_is_store_A))) || 
-                              (X_is_load_A && ((X_rd_A == X_rs_B && X_rs_re_B) || (X_rd_A == X_rt_B && X_rt_re_B && ~X_is_store_B)));
+      wire is_XA_to_XB_LTU = (X_is_load_B && ((X_rd_B == X_rs_A && X_rs_re_A) || (X_rd_B == X_rt_A && X_rt_re_A && ~X_is_store_A)));
+      //wire is_XB_to_XA_LTU = (X_is_load_A && ((X_rd_A == X_rs_B && X_rs_re_B) || (X_rd_A == X_rt_B && X_rt_re_B && ~X_is_store_B)));
 
       // (4) Structural hazard (both X.A and X.B access memory)
       wire is_structural_hazard = (X_is_load_A || X_is_store_A) && (X_is_load_B || X_is_store_B);
 
       // if instruction X.A (the insn in the Decode stage in the A pipe) has a LTU dependence,
       // insert a NOP into both pipes, and stall the fetch and decode stages. Record a load-to-use stall (stall = 3) in pipe A and a superscalar stall (stall = 1) in pipeline B.
+      wire case1 = is_XA_LTU;
       always @ (is_XA_LTU) begin
          //insert a NOP into both pipes, and stall the fetch and decode stages.
-         stall_in_A = 2'b11;
-         stall_in_B = 2'b11;
+         // stall_in_A = 2'b11;
+         // stall_in_B = 2'b01;
          //Record a load-to-use stall (stall = 3) in pipe A and a superscalar stall (stall = 1) in pipeline B.
-         stall_x_A = 2'b11;
-         stall_x_B = 2'b01;
+         stall_x_A = X_stall_A == 2'b10 ? 2'b10 : 2'b11;
+         stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b01;
       end
 
       // If instruction X.B has a LTU dependence, but does not have any dependencies on instruction X.A, and instruction X.A does not stall, 
       // then stall pipeline B only (see Pipe Switching section below) and record a load-to-use stall in pipeline B.
-      always @ (is_XB_LTU && ~is_XA_XB_LTU && ~is_XA_LTU) begin
+      wire case2 = is_XB_LTU && ~is_XA_to_XB_LTU && ~is_XA_LTU;
+      always @ (is_XB_LTU && ~is_XA_to_XB_LTU && ~is_XA_LTU) begin
          //stall pipeline B only (see Pipe Switching section below)
          //and record a load-to-use stall in pipeline B.
-         stall_x_B = 2'b01;
+         stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b11;
       end
 
       // If instruction X.B requires a value computed by X.A (including if X.A is a load), and instruction X.A does not stall, 
       //then stall pipe B only (see Pipe Switching section), and record a superscalar stall in pipeline B.
-      always @ (is_XA_XB_LTU && ~is_XA_LTU) begin
+      wire case3 = is_XA_to_XB_LTU && ~is_XA_LTU;
+      always @ (is_XA_to_XB_LTU && ~is_XA_LTU) begin
          //stall pipe B only (see Pipe Switching section), 
          //and record a superscalar stall in pipeline B.
+         stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b01;
       end
 
       // If neither instruction has a load-to-use dependence, and instruction X.B does not depend on instruction X.A, 
       // then both instructions advance normally.
-      always @ (~is_XB_LTU && ~is_XA_LTU && ~is_XA_XB_LTU) begin
+      wire case4 = ~is_XB_LTU && ~is_XA_LTU && ~is_XA_to_XB_LTU;
+      always @ (~is_XB_LTU && ~is_XA_LTU && ~is_XA_to_XB_LTU) begin
          // both instructions advance normally.
+         //then both instructions advance normally
+         stall_x_A = X_stall_A == 2'b10 ? 2'b10 : 2'b00;
+         stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b00;
       end
 
       // If you have two independent instructions that interact with memory in the same stage (e.g., two loads, or a load and a store), 
       // instruction X.B incurs a superscalar stall, since only one instruction can interact with memory at a time.
-
-      always @ (~is_XB_LTU && ~is_XA_LTU && ~is_XA_XB_LTU && is_structural_hazard) begin 
-         //instruction D.B incurs a superscalar stall, since only one instruction can interact with memory at a time.
+      wire case5 = ~is_XB_LTU && ~is_XA_LTU && ~is_XA_to_XB_LTU && is_structural_hazard;
+      always @ (~is_XB_LTU && ~is_XA_LTU && ~is_XA_to_XB_LTU && is_structural_hazard) begin 
+         //instruction X.B incurs a superscalar stall, since only one instruction can interact with memory at a time.
+         // stall_in_B = 2'b01;
+         stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b01;
       end
 
       // If you encounter a case where you could record either a superscalar or load-to-use stall, the superscalar stall takes precedence.
+      //wire [1:0] stall_x = X_stall_A == 2'b10 ? 2'b10 : (should_stall ? 2'b11 : (should_flush ? 2'b10 : 2'b00));
+      // assign stall_x_A = X_stall_A == 2'b10 ? 2'b10 : (case1 ? 2'b11 : case4 ? 2'b00 : 2'b00);
+      // assign stall_x_B = X_stall_A == 2'b10 ? 2'b10 : (case1 ? 2'b01 : (case2 ? 2'b11 : (case3 ? 2'b01 : (case4 ? 2'b00 : (case5 ? 2'b01 :  2'b00)))));
       assign should_stall_A = stall_x_A == 2'b11 || stall_x_A == 2'b01;
       assign should_stall_B = stall_x_B == 2'b11 || stall_x_B == 2'b01;
 
-      assign should_flush_B = (M_is_branch_B && |(M_insn_B[11:9] & W_nzp_B)) || M_is_control_insn_B;
-
+      assign should_flush_A = 1'b0;//(M_is_branch_B && |(M_insn_B[11:9] & W_nzp_B)) || M_is_control_insn_B;
+      assign should_flush_B = 1'b0;
       assign rsdata_B = W_regfile_we_B && (W_rd_B == X_rs_B) ? W_dmem_data_B : regfile_rsdata_out_B;
       assign rtdata_B = W_regfile_we_B && (W_rd_B == X_rt_B) ? W_dmem_addr_B : regfile_rtdata_out_B;
 
       assign i_alu_r1data_B = W_regfile_we_B && (W_rd_B == M_rs_B) ? W_alu_result_B : (regfile_we_B && (rd_B == M_rs_B) ? rddata_B : M_A_B);
       assign i_alu_r2data_B = W_regfile_we_B && (W_rd_B == M_rt_B) ? W_alu_result_B : (regfile_we_B && (rd_B == M_rt_B) ? rddata_B : M_B_B);
 
+      wire is_load_to_store_A = W_is_load_A && M_is_store_A && W_rd_A == M_rt_A;
+      assign M_dmem_data_A = is_load_to_store_A ? W_dmem_data_A : (M_is_load_A ? i_cur_dmem_data : (M_is_store_A ? i_alu_r2data_A: 16'b0));
+
+      wire is_load_to_store_B = W_is_load_B && M_is_store_B && W_rd_B == M_rt_B;
+      assign M_dmem_data_B = is_load_to_store_B ? W_dmem_data_B : (M_is_load_B ? i_cur_dmem_data : (M_is_store_B ? i_alu_r2data_B: 16'b0));
+
+      wire [15:0] nzp_data_A = M_is_control_insn_A ? X_pc_A : (M_is_load_A ? M_dmem_data_A : alu_result_A);
+      assign nzp_in_A[2] = nzp_data_A[15];
+      assign nzp_in_A[1] = &(~nzp_data_A);
+      assign nzp_in_A[0] = ~nzp_data_A[15] && (|nzp_data_A);
+
       wire [15:0] nzp_data_B = M_is_control_insn_B ? X_pc_B : (M_is_load_B ? M_dmem_data_B : alu_result_B);
       assign nzp_in_B[2] = nzp_data_B[15];
       assign nzp_in_B[1] = &(~nzp_data_B);
       assign nzp_in_B[0] = ~nzp_data_B[15] && (|nzp_data_B);
 
+
+      assign rd_A        = rs_rt_rd_out_A[2:0];
       assign rd_B        = rs_rt_rd_out_B[2:0];
+
+      assign rddata_A    = is_control_insn_A ? W_pc_A : (is_load_A ? dmem_data_out_A : alu_result_out_A);
       assign rddata_B    = is_control_insn_B ? W_pc_B : (is_load_B ? dmem_data_out_B : alu_result_out_B);
 
       assign next_pc_B = should_flush_B ? alu_result_B : (should_stall_B ? pc_B : pc_plus_one_B); //assume the next pc is pc+1
