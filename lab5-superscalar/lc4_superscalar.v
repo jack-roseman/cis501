@@ -53,176 +53,177 @@ module lc4_processor(input wire         clk,             // main clock
       // you desire.
       assign led_data = switch_data;
       wire superscalar = 1'b0;
-      wire should_flush, should_stall, is_WD_bypass;
-      wire [1:0] hazard, D_stall, X_stall, M_stall, W_stall, stall_out;
-      wire [2:0] nzp_in, nzp, rd, nzp_out, W_nzp;
-      wire [15:0] D_insn, X_insn_in, X_insn, M_insn_in, M_insn, W_insn, insn_out, alu_result;
-      wire [15:0] rsdata, rtdata, rddata, X_A, X_B, M_A, M_B, W_alu_result, W_D, alu_result_out, regfile_rsdata_out, regfile_rtdata_out;
-      wire [15:0] i_alu_r1data, i_alu_r2data; //inputs to ALU 
-      wire [2:0] D_rs, D_rt, D_rd;
-      wire [2:0] X_rs, X_rt, X_rd;
-      wire [2:0] M_rs, M_rt, M_rd;
-      wire [2:0] W_rs, W_rt, W_rd;
-      wire D_rs_re, D_rt_re, D_regfile_we, D_nzp_we, D_select_pc_plus_one, D_is_load, D_is_store, D_is_branch, D_is_control_insn;
-      wire X_rs_re, X_rt_re, X_regfile_we, X_nzp_we, X_select_pc_plus_one, X_is_load, X_is_store, X_is_branch, X_is_control_insn;
-      wire M_rs_re, M_rt_re, M_regfile_we, M_nzp_we, M_select_pc_plus_one, M_is_load, M_is_store, M_is_branch, M_is_control_insn;
-      wire W_rs_re, W_rt_re, W_regfile_we, W_nzp_we, W_select_pc_plus_one, W_is_load, W_is_store, W_is_branch, W_is_control_insn;
-      wire rs_re, rt_re, regfile_we, nzp_we, select_pc_plus_one, is_load, is_store, is_branch, is_control_insn;
-      wire [8:0] D_rs_rt_rd, X_rs_rt_rd, M_rs_rt_rd, W_rs_rt_rd, rs_rt_rd_out;
-      wire [15:0] M_dmem_data, M_dmem_addr, W_dmem_data, W_dmem_addr, dmem_data_out, dmem_addr_out; 
-      wire [8:0] D_bus, X_bus, M_bus, W_bus, bus_out;
-      wire [15:0] pc, pc_plus_one, D_pc, X_pc, M_pc, W_pc, pc_out, next_pc, M_pc_plus_one;
+      wire should_flush_B, should_stall_B;
+      wire [1:0] X_stall_B, M_stall_B, W_stall_B, stall_out_B;
+      wire [2:0] nzp_in_B, nzp_B, rd_B, nzp_out_B, W_nzp_B;
+      wire [15:0] D_insn_B, X_insn_in_B, X_insn_B, M_insn_in_B, M_insn_B, W_insn_B, insn_out_B, alu_result_B;
+      wire [15:0] rsdata_B, rtdata_B, rddata_B, X_A_B, X_B_B, M_A_B, M_B_B, W_alu_result_B, W_D_B, alu_result_out_B, regfile_rsdata_out_B, regfile_rtdata_out_B;
+      wire [15:0] i_alu_r1data_B, i_alu_r2data_B; //inputs to ALU 
+      wire [2:0] D_rs_B, D_rt_B, D_rd_B;
+      wire [2:0] X_rs_B, X_rt_B, X_rd_B;
+      wire [2:0] M_rs_B, M_rt_B, M_rd_B;
+      wire [2:0] W_rs_B, W_rt_B, W_rd_B;
+      wire D_rs_re_B, D_rt_re_B, D_regfile_we_B, D_nzp_we_B, D_select_pc_plus_one_B, D_is_load_B, D_is_store_B, D_is_branch_B, D_is_control_insn_B;
+      wire X_rs_re_B, X_rt_re_B, X_regfile_we_B, X_nzp_we_B, X_select_pc_plus_one_B, X_is_load_B, X_is_store_B, X_is_branch_B, X_is_control_insn_B;
+      wire M_rs_re_B, M_rt_re_B, M_regfile_we_B, M_nzp_we_B, M_select_pc_plus_one_B, M_is_load_B, M_is_store_B, M_is_branch_B, M_is_control_insn_B;
+      wire W_rs_re_B, W_rt_re_B, W_regfile_we_B, W_nzp_we_B, W_select_pc_plus_one_B, W_is_load_B, W_is_store_B, W_is_branch_B, W_is_control_insn_B;
+      wire rs_re_B, rt_re_B, regfile_we_B, nzp_we_B, select_pc_plus_one_B, is_load_B, is_store_B, is_branch_B, is_control_insn_B;
+      wire [8:0] D_rs_rt_rd_B, X_rs_rt_rd_B, M_rs_rt_rd_B, W_rs_rt_rd_B, rs_rt_rd_out_B;
+      wire [15:0] M_dmem_data_B, M_dmem_addr_B, W_dmem_data_B, W_dmem_addr_B, dmem_data_out_B, dmem_addr_out_B; 
+      wire [8:0] D_bus_B, X_bus_B, M_bus_B, W_bus_B, bus_out_B;
+      wire [15:0] pc_B, pc_plus_one, D_pc_B, X_pc_B, M_pc_B, W_pc_B, pc_out_B, next_pc, M_pc_plus_one_B;
  
       //rsre (8), rtre (7), regfilewe (6), nzpwe (5), selectpcplusone (4), isload (3), isstore (2), isbranch (1), iscontrolinsn (0)
-      assign X_rs =                 X_rs_rt_rd[8:6];
-      assign X_rt =                 X_rs_rt_rd[5:3];
-      assign X_rd =                 X_rs_rt_rd[2:0];
+      assign X_rs_B =                 X_rs_rt_rd_B[8:6];
+      assign X_rt_B =                 X_rs_rt_rd_B[5:3];
+      assign X_rd_B =                 X_rs_rt_rd_B[2:0];
 
-      assign M_rs =                 M_rs_rt_rd[8:6];
-      assign M_rt =                 M_rs_rt_rd[5:3];
-      assign M_rd =                 M_rs_rt_rd[2:0];
+      assign M_rs_B =                 M_rs_rt_rd_B[8:6];
+      assign M_rt_B =                 M_rs_rt_rd_B[5:3];
+      assign M_rd_B =                 M_rs_rt_rd_B[2:0];
 
-      assign W_rs =                 W_rs_rt_rd[8:6];
-      assign W_rt =                 W_rs_rt_rd[5:3];
-      assign W_rd =                 W_rs_rt_rd[2:0];
+      assign W_rs_B =                 W_rs_rt_rd_B[8:6];
+      assign W_rt_B =                 W_rs_rt_rd_B[5:3];
+      assign W_rd_B =                 W_rs_rt_rd_B[2:0];
 
-      assign X_rs_re =              X_bus[8];
-      assign X_rt_re =              X_bus[7];
-      assign X_regfile_we =         X_bus[6];
-      assign X_nzp_we =             X_bus[5];
-      assign X_select_pc_plus_one = X_bus[4];
-      assign X_is_load =            X_bus[3];
-      assign X_is_store =           X_bus[2];
-      assign X_is_branch =          X_bus[1];
-      assign X_is_control_insn =    X_bus[0];
+      assign X_rs_re_B =              X_bus_B[8];
+      assign X_rt_re_B =              X_bus_B[7];
+      assign X_regfile_we_B =         X_bus_B[6];
+      assign X_nzp_we_B =             X_bus_B[5];
+      assign X_select_pc_plus_one_B = X_bus_B[4];
+      assign X_is_load_B =            X_bus_B[3];
+      assign X_is_store_B =           X_bus_B[2];
+      assign X_is_branch_B =          X_bus_B[1];
+      assign X_is_control_insn_B =    X_bus_B[0];
 
-      assign M_rs_re =              M_bus[8];
-      assign M_rt_re =              M_bus[7];
-      assign M_regfile_we =         M_bus[6];
-      assign M_nzp_we =             M_bus[5];
-      assign M_select_pc_plus_one = M_bus[4];
-      assign M_is_load =            M_bus[3];
-      assign M_is_store =           M_bus[2];
-      assign M_is_branch =          M_bus[1];
-      assign M_is_control_insn =    M_bus[0];
+      assign M_rs_re_B =              M_bus_B[8];
+      assign M_rt_re_B =              M_bus_B[7];
+      assign M_regfile_we_B =         M_bus_B[6];
+      assign M_nzp_we_B =             M_bus_B[5];
+      assign M_select_pc_plus_one_B = M_bus_B[4];
+      assign M_is_load_B =            M_bus_B[3];
+      assign M_is_store_B =           M_bus_B[2];
+      assign M_is_branch_B =          M_bus_B[1];
+      assign M_is_control_insn_B =    M_bus_B[0];
 
-      assign W_rs_re =              W_bus[8];
-      assign W_rt_re =              W_bus[7];
-      assign W_regfile_we =         W_bus[6];
-      assign W_nzp_we =             W_bus[5];
-      assign W_select_pc_plus_one = W_bus[4];
-      assign W_is_load =            W_bus[3];
-      assign W_is_store =           W_bus[2];
-      assign W_is_branch =          W_bus[1];
-      assign W_is_control_insn =    W_bus[0];
+      assign W_rs_re_B =              W_bus_B[8];
+      assign W_rt_re_B =              W_bus_B[7];
+      assign W_regfile_we_B =         W_bus_B[6];
+      assign W_nzp_we_B =             W_bus_B[5];
+      assign W_select_pc_plus_one_B = W_bus_B[4];
+      assign W_is_load_B =            W_bus_B[3];
+      assign W_is_store_B =           W_bus_B[2];
+      assign W_is_branch_B =          W_bus_B[1];
+      assign W_is_control_insn_B =    W_bus_B[0];
 
-      assign rs_re =                bus_out[8];
-      assign rt_re =                bus_out[7];
-      assign regfile_we =           bus_out[6];
-      assign nzp_we =               bus_out[5];
-      assign select_pc_plus_one  =  bus_out[4];
-      assign is_load =              bus_out[3];
-      assign is_store =             bus_out[2];
-      assign is_branch =            bus_out[1];
-      assign is_control_insn =      bus_out[0];
+      assign rs_re_B =                bus_out_B[8];
+      assign rt_re_B =                bus_out_B[7];
+      assign regfile_we_B =           bus_out_B[6];
+      assign nzp_we_B =               bus_out_B[5];
+      assign select_pc_plus_one_B  =  bus_out_B[4];
+      assign is_load_B =              bus_out_B[3];
+      assign is_store_B =             bus_out_B[2];
+      assign is_branch_B =            bus_out_B[1];
+      assign is_control_insn_B =      bus_out_B[0];
 
-      wire [1:0] stall_in = should_flush ? 2'b10 : 2'b00;
-      Nbit_reg #(2, 2'b10)   FD_stall_reg(.in(stall_in),     .out(X_stall),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      wire [1:0] stall_x = X_stall == 2'b10 ? 2'b10 : (should_stall ? 2'b11 : (should_flush ? 2'b10 : 2'b00));
-      Nbit_reg #(2, 2'b10)   DX_stall_reg(.in(stall_x),     .out(M_stall),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   XM_stall_reg(.in(M_stall),      .out(W_stall),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   MW_stall_reg(.in(W_stall),     .out(stall_out),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
       Nbit_reg #(16, 16'h8200) pc_reg (.in(next_pc), .out(pc), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
 
       cla16 add_one(.a(pc), .b(16'b0), .cin(1'b1), .sum(pc_plus_one)); //assume the next instruction for the current decoded insn is pc + 1
       
-      Nbit_reg #(16, 16'b0)       DX_pc_reg(.in(pc),         .out(X_pc),       .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
-      Nbit_reg #(16, 16'b0)     DX_insn_reg(.in(i_cur_insn), .out(X_insn),     .clk(clk), .we(~should_stall), .gwe(gwe), .rst(should_flush || rst));
+      Nbit_reg #(16, 16'b0)       DX_pc_reg(.in(pc),         .out(X_pc_B),       .clk(clk), .we(~should_stall_B), .gwe(gwe), .rst(should_flush_B || rst));
+      Nbit_reg #(16, 16'b0)     DX_insn_reg(.in(i_cur_insn), .out(X_insn_B),     .clk(clk), .we(~should_stall_B), .gwe(gwe), .rst(should_flush_B || rst));
       
-      lc4_decoder dec(  .insn(X_insn),
-                        .r1sel(X_rs_rt_rd[8:6]), .r1re(X_bus[8]),
-                        .r2sel(X_rs_rt_rd[5:3]), .r2re(X_bus[7]), 
-                        .wsel (X_rs_rt_rd[2:0]), .regfile_we(X_bus[6]),
-                        .nzp_we(X_bus[5]),       .select_pc_plus_one(X_bus[4]), 
-                        .is_load(X_bus[3]),      .is_store(X_bus[2]), 
-                        .is_branch(X_bus[1]),    .is_control_insn(X_bus[0]));
+      lc4_decoder dec(  .insn(X_insn_B),
+                        .r1sel(X_rs_rt_rd_B[8:6]), .r1re(X_bus_B[8]),
+                        .r2sel(X_rs_rt_rd_B[5:3]), .r2re(X_bus_B[7]), 
+                        .wsel (X_rs_rt_rd_B[2:0]), .regfile_we(X_bus_B[6]),
+                        .nzp_we(X_bus_B[5]),       .select_pc_plus_one(X_bus_B[4]), 
+                        .is_load(X_bus_B[3]),      .is_store(X_bus_B[2]), 
+                        .is_branch(X_bus_B[1]),    .is_control_insn(X_bus_B[0]));
 
-      lc4_regfile registerfile(  .i_rs(X_rs),                      .i_rt(X_rt),                    .i_rd(rd),
-                                 .o_rs_data(regfile_rsdata_out),   .o_rt_data(regfile_rtdata_out), .i_wdata(rddata), .i_rd_we(regfile_we),
-                                 .clk(clk), .gwe(gwe), .rst(rst)); 
+      lc4_regfile_ss registerfile(  .i_rs_A(X_rs_A),                      .i_rt_A(X_rt_A),                    .i_rd_A(rd_A),
+                                    .i_rs_B(X_rs_B),                      .i_rt_B(X_rt_B),                    .i_rd_B(rd_B),
+                                    .o_rs_data_A(regfile_rsdata_out_A),   .o_rt_data_A(regfile_rtdata_out_A), .i_wdata_A(rddata_A), .i_rd_we_A(regfile_we_A),
+                                    .o_rs_data_B(regfile_rsdata_out_B),   .o_rt_data_B(regfile_rtdata_out_B), .i_wdata_A(rddata_B), .i_rd_we_B(regfile_we_B),
+                                    .clk(clk), .gwe(gwe), .rst(rst)); 
                         
-      Nbit_reg #(16, 16'b0)     XM_pc_reg(.in(X_pc),       .out(M_pc),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_stall || rst));
-      Nbit_reg #(16, 16'b0)   XM_insn_reg(.in(X_insn),     .out(M_insn),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_stall || rst));
-      Nbit_reg #(9, 9'b0) XM_rs_rt_rd_reg(.in(X_rs_rt_rd), .out(M_rs_rt_rd), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || should_stall || rst));
-      Nbit_reg #(9, 9'b0)      XM_bus_reg(.in(X_bus),      .out(M_bus),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || should_stall || rst));
-      Nbit_reg #(16, 16'b0)      XM_A_reg(.in(rsdata),     .out(M_A),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || should_stall || rst)); 
-      Nbit_reg #(16, 16'b0)      XM_B_reg(.in(rtdata),     .out(M_B),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush || should_stall || rst));
+      Nbit_reg #(16, 16'b0)     XM_pc_regB(.in(X_pc_B),       .out(M_pc_B),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_stall_B || rst));
+      Nbit_reg #(16, 16'b0)   XM_insn_regB(.in(X_insn_B),     .out(M_insn_B),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_stall_B || rst));
+      Nbit_reg #(9, 9'b0) XM_rs_rt_rd_regB(.in(X_rs_rt_rd_B), .out(M_rs_rt_rd_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush_B || should_stall_B || rst));
+      Nbit_reg #(9, 9'b0)      XM_bus_regB(.in(X_bus_B),      .out(M_bus_B),      .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush_B || should_stall_B || rst));
+      Nbit_reg #(16, 16'b0)      XM_A_regB(.in(rsdata_B),     .out(M_A_B),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush_B || should_stall_B || rst)); 
+      Nbit_reg #(16, 16'b0)      XM_B_regB(.in(rtdata_B),     .out(M_B_B),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(should_flush_B || should_stall_B || rst));
      
-      lc4_alu alu (.i_insn(M_insn), .i_pc(M_pc), .i_r1data(i_alu_r1data), .i_r2data(i_alu_r2data), .o_result(alu_result)); //ALU
+      lc4_alu alu (.i_insn(M_insn_B), .i_pc(M_pc_B), .i_r1data(i_alu_r1data_B), .i_r2data(i_alu_r2data_B), .o_result(alu_result_B)); //ALU
 
-      Nbit_reg #(16, 16'b0)     MW_pc_reg(.in(M_pc),         .out(W_pc),         .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)   MW_insn_reg(.in(M_insn),       .out(W_insn),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(9, 9'b0) MW_rs_rt_rd_reg(.in(M_rs_rt_rd),   .out(W_rs_rt_rd),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)      MW_O_reg(.in(alu_result),   .out(W_alu_result), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
-      Nbit_reg #(9, 9'b0)      MW_bus_reg(.in(M_bus),        .out(W_bus),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)     MW_pc_regB(.in(M_pc_B),         .out(W_pc_B),         .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)   MW_insn_regB(.in(M_insn_B),       .out(W_insn_B),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(9, 9'b0) MW_rs_rt_rd_regB(.in(M_rs_rt_rd_B),   .out(W_rs_rt_rd_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)      MW_O_regB(.in(alu_result_B),   .out(W_alu_result_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
+      Nbit_reg #(9, 9'b0)      MW_bus_regB(.in(M_bus_B),        .out(W_bus_B),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
-      Nbit_reg #(16, 16'b0)     WD_pc_reg(.in(W_pc),         .out(pc_out),         .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)   WD_insn_reg(.in(W_insn),       .out(insn_out),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(9, 9'b0) WD_rs_rt_rd_reg(.in(W_rs_rt_rd),   .out(rs_rt_rd_out),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0)      WD_O_reg(.in(W_alu_result), .out(alu_result_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
-      Nbit_reg #(9, 9'b0)      WD_bus_reg(.in(W_bus),        .out(bus_out),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)     WD_pc_regB(.in(W_pc_B),         .out(pc_out_B),         .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)   WD_insn_regB(.in(W_insn_B),       .out(insn_out_B),       .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(9, 9'b0) WD_rs_rt_rd_regB(.in(W_rs_rt_rd_B),   .out(rs_rt_rd_out_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0)      WD_O_regB(.in(W_alu_result_B), .out(alu_result_out_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
+      Nbit_reg #(9, 9'b0)      WD_bus_regB(.in(W_bus_B),        .out(bus_out_B),        .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
-      Nbit_reg #(3, 3'b0) M_nzp_reg(.in(nzp_in),  .out(W_nzp),  .clk(clk), .we(M_nzp_we), .gwe(gwe), .rst(rst));
-	   Nbit_reg #(3, 3'b0) W_nzp_reg(.in(W_nzp),   .out(nzp),    .clk(clk), .we(W_nzp_we), .gwe(gwe), .rst(rst));
+      Nbit_reg #(3, 3'b0) M_nzp_reg_B(.in(nzp_in_B),  .out(W_nzp_B),  .clk(clk), .we(M_nzp_we_B), .gwe(gwe), .rst(rst));
+	   Nbit_reg #(3, 3'b0) W_nzp_reg_B(.in(W_nzp_B),   .out(nzp_B),    .clk(clk), .we(W_nzp_we_B), .gwe(gwe), .rst(rst));
 
-      assign M_dmem_addr = M_is_store || M_is_load ? alu_result : 16'b0;
-      Nbit_reg #(16, 16'b0) MW_dmem_addr_reg(.in(M_dmem_addr), .out(W_dmem_addr),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
-      Nbit_reg #(16, 16'b0) WD_dmem_addr_reg(.in(W_dmem_addr), .out(dmem_addr_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
+      assign M_dmem_addr_B = M_is_store_B || M_is_load_B ? alu_result_B : 16'b0;
+      Nbit_reg #(16, 16'b0) MW_dmem_addr_regB(.in(M_dmem_addr_B), .out(W_dmem_addr_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
+      Nbit_reg #(16, 16'b0) WD_dmem_addr_regB(.in(W_dmem_addr_B), .out(dmem_addr_out_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem address
 
-      wire is_load_to_store = W_is_load && M_is_store && W_rd == M_rt;
-      assign M_dmem_data = is_load_to_store ? W_dmem_data : (M_is_load ? i_cur_dmem_data : (M_is_store ? i_alu_r2data: 16'b0));
-      Nbit_reg #(16, 16'b0) MW_dmem_data_reg(.in(M_dmem_data), .out(W_dmem_data),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(16, 16'b0) WD_dmem_data_reg(.in(W_dmem_data), .out(dmem_data_out), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
+      wire is_load_to_store_B = W_is_load_B && M_is_store_B && W_rd_B == M_rt_B;
+      assign M_dmem_data_B = is_load_to_store_B ? W_dmem_data_B : (M_is_load_B ? i_cur_dmem_data : (M_is_store_B ? i_alu_r2data_B: 16'b0));
+      Nbit_reg #(16, 16'b0) MW_dmem_data_regB(.in(M_dmem_data_B), .out(W_dmem_data_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'b0) WD_dmem_data_regB(.in(W_dmem_data_B), .out(dmem_data_out_B), .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst)); //Holds dmem data
+   
+      wire is_load_to_use_B = (M_is_load_B && M_rd_B == X_rs_B && X_rs_re_B) || (M_is_load_B && ~X_is_store_B && ~X_is_load_B && M_rd_B == X_rt_B && X_rt_re_B);
+      assign should_stall_B = is_load_to_use_B || (M_is_load_B && X_is_branch_B);
+      assign should_flush_B = (M_is_branch_B && |(M_insn_B[11:9] & W_nzp_B)) || M_is_control_insn_B;
 
-      wire is_load_to_use = (M_is_load && M_rd == X_rs && X_rs_re) || (M_is_load && ~X_is_store && ~X_is_load && M_rd == X_rt && X_rt_re);
-      assign should_stall = is_load_to_use || (M_is_load && X_is_branch);
-      assign should_flush = (M_is_branch && |(M_insn[11:9] & W_nzp)) || M_is_control_insn;
+      assign rsdata_B = W_regfile_we_B && (W_rd_B == X_rs_B) ? W_dmem_data_B : regfile_rsdata_out_B;
+      assign rtdata_B = W_regfile_we_B && (W_rd_B == X_rt_B) ? W_dmem_addr_B : regfile_rtdata_out_B;
 
-      assign rsdata = W_regfile_we && (W_rd == X_rs) ? W_dmem_data :  (regfile_we && (rd == X_rs) ? rddata : regfile_rsdata_out);
-      assign rtdata = W_regfile_we && (W_rd == X_rt) ? W_dmem_addr : (regfile_we && (rd == X_rt) ? rddata : regfile_rtdata_out);
+      assign i_alu_r1data_B = W_regfile_we_B && (W_rd_B == M_rs_B) ? W_alu_result_B : (regfile_we_B && (rd_B == M_rs_B) ? rddata_B : M_A_B);
+      assign i_alu_r2data_B = W_regfile_we_B && (W_rd_B == M_rt_B) ? W_alu_result_B : (regfile_we_B && (rd_B == M_rt_B) ? rddata_B : M_B_B);
 
-      assign i_alu_r1data = W_regfile_we && (W_rd == M_rs) ? W_alu_result : (regfile_we && (rd == M_rs) ? rddata : M_A);
-      assign i_alu_r2data = W_regfile_we && (W_rd == M_rt) ? W_alu_result : (regfile_we && (rd == M_rt) ? rddata : M_B);
+      wire [15:0] nzp_data_B = M_is_control_insn_B ? X_pc_B : (M_is_load_B ? M_dmem_data_B : alu_result_B);
+      assign nzp_in_B[2] = nzp_data_B[15];
+      assign nzp_in_B[1] = &(~nzp_data_B);
+      assign nzp_in_B[0] = ~nzp_data_B[15] && (|nzp_data_B);
 
-      wire [15:0] nzp_data = M_is_control_insn ? X_pc : (M_is_load ? M_dmem_data : alu_result);
-      assign nzp_in[2] = nzp_data[15];
-      assign nzp_in[1] = &(~nzp_data);
-      assign nzp_in[0] = ~nzp_data[15] && (|nzp_data);
+      assign rd_B        = rs_rt_rd_out_B[2:0];
+      assign rddata_B    = is_control_insn_B ? W_pc_B : (is_load_B ? dmem_data_out_B : alu_result_out_B);
 
-      assign rd        = rs_rt_rd_out[2:0];
-      assign rddata    = is_control_insn ? W_pc : (is_load ? dmem_data_out : alu_result_out);
+      assign next_pc = should_flush_B ? alu_result_B : (should_stall_B ? pc_B : pc_plus_one_B); //assume the next pc is pc+1
 
-      assign next_pc = should_flush ? alu_result : (should_stall ? pc : pc_plus_one); //assume the next pc is pc+1
+      
+      
       
       //SET OUTPUTS
-      assign o_dmem_we = M_is_store;  // Data memory write enable
-      assign o_dmem_addr = M_dmem_addr;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
-      assign o_dmem_towrite = M_dmem_data;
+      assign o_dmem_we = M_is_store_B;  // Data memory write enable
+      assign o_dmem_addr = M_dmem_addr_B;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
+      assign o_dmem_towrite = M_dmem_data_B;
       assign o_cur_pc = pc;
       
+
+
       //SET TESTING PINS - 
-      assign test_regfile_we   = regfile_we;    // Testbench: register file write enable
-      assign test_regfile_wsel = rd;  // Testbench: which register to write in the register file
-      assign test_regfile_data = rddata;  // Testbench: value to write into the register file
-      assign test_nzp_we       = nzp_we;     // Testbench: NZP condition codes write enable
-      assign test_nzp_new_bits = nzp;  // Testbench: value to write to NZP bits
-      assign test_dmem_we      = is_store;       // Testbench: data memory write enable
-      assign test_dmem_addr    = dmem_addr_out;     // Testbench: address to read/write memory
-      assign test_dmem_data    = dmem_data_out;     // Testbench: value read/writen from/to memory 
-      assign test_stall        = stall_out; // Always execute one instruction each cycle (test_stall will get used in your pipelined processor)
-      assign test_cur_pc       = pc_out; 
-      assign test_cur_insn     = insn_out; 
+      assign test_regfile_we_B   = regfile_we_B;    // Testbench: register file write enable
+      assign test_regfile_wsel_B = rd_B;  // Testbench: which register to write in the register file
+      assign test_regfile_data_B = rddata_B;  // Testbench: value to write into the register file
+      assign test_nzp_we_B       = nzp_we_B;     // Testbench: NZP condition codes write enable
+      assign test_nzp_new_bits_B = nzp_B;  // Testbench: value to write to NZP bits
+      assign test_dmem_we_B      = is_store_B;       // Testbench: data memory write enable
+      assign test_dmem_addr_B    = dmem_addr_out_B;     // Testbench: address to read/write memory
+      assign test_dmem_data_B    = dmem_data_out_B;     // Testbench: value read/writen from/to memory 
+      assign test_stall_B        = stall_out_B; // Always execute one instruction each cycle (test_stall will get used in your pipelined processor)
+      assign test_cur_pc_B       = pc_out_B; 
+      assign test_cur_insn_B     = insn_out_B; 
 
     /* Add $display(...) calls in the always block below to
     * print out debug information at the end of every cycle.
