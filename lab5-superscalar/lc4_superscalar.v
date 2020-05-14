@@ -52,7 +52,7 @@ module lc4_processor(input wire         clk,             // main clock
       // disconnected ports. Feel free to use this for debugging input/output if
       // you desire.
       assign led_data = switch_data;
-      wire superscalar = 1'b0;
+      wire superscalar_stall;
       wire should_flush_A, should_stall_A;
       wire should_flush_B, should_stall_B;
 
@@ -107,8 +107,8 @@ module lc4_processor(input wire         clk,             // main clock
       wire [8:0] D_bus_A, X_bus_A, M_bus_A, W_bus_A, bus_out_A;
       wire [8:0] D_bus_B, X_bus_B, M_bus_B, W_bus_B, bus_out_B;
 
-      wire [15:0] pc_A, pc_plus_one_A, D_pc_A, X_pc_A, M_pc_A, W_pc_A, pc_out_A, next_pc_A, M_pc_plus_one_A, X_pc_A_tmp, pc_A_tmp;
-      wire [15:0] pc_B, pc_plus_one_B, D_pc_B, X_pc_B, M_pc_B, W_pc_B, pc_out_B, next_pc_B, M_pc_plus_one_B, X_pc_B_tmp, pc_B_tmp;
+      wire [15:0] pc_A, pc_plus_one_A, D_pc_A, X_pc_A, M_pc_A, W_pc_A, pc_out_A, next_pc_A, M_pc_plus_one_A, X_pc_A_tmp, pc_A_tmp, pc_plus_two_A;
+      wire [15:0] pc_B, pc_plus_one_B, D_pc_B, X_pc_B, M_pc_B, W_pc_B, pc_out_B, next_pc_B, M_pc_plus_one_B, X_pc_B_tmp, pc_B_tmp, pc_plus_two_B;
  
       //rsre (8), rtre (7), regfilewe (6), nzpwe (5), selectpcplusone (4), isload (3), isstore (2), isbranch (1), iscontrolinsn (0)
 
@@ -245,33 +245,31 @@ module lc4_processor(input wire         clk,             // main clock
       assign is_control_insn_B =      bus_out_B[0];
 
 
-      assign pc_B_tmp = pc_plus_one_A;
       cla16 add_oneA(.a(pc_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_A)); //assume the next instruction for the current decoded insn is pc + 1
       cla16 add_oneB(.a(pc_B), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_B)); //assume the next instruction for the current decoded insn is pc + 1
       
-      cla16 add_oneA1(.a(pc_plus_one_A), .b(16'b0), .cin(1'b1), .sum(next_pc_A)); //assume the next instruction for the current decoded insn is pc + 1
-      cla16 add_oneB2(.a(pc_plus_one_B), .b(16'b0), .cin(1'b1), .sum(next_pc_B)); //assume the next instruction for the current decoded insn is pc + 1
+      cla16 add_oneA1(.a(pc_plus_one_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_A)); //assume the next instruction for the current decoded insn is pc + 1
+      cla16 add_oneB2(.a(pc_plus_one_B), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_B)); //assume the next instruction for the current decoded insn is pc + 1
 
 
-
-      Nbit_reg #(16, 16'h8200)  pc_reg (.in(next_pc_A),         .out(pc_A_tmp), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
+      Nbit_reg #(16, 16'h8200)  pc_reg (.in(next_pc_A), .out(pc_A_tmp), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
 
       Nbit_reg #(16, 16'b0)     FD_insn_regA(.in(i_cur_insn_A), .out(D_insn_A_tmp),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)     FD_insn_regB(.in(i_cur_insn_B), .out(D_insn_B_tmp),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
-      wire should_switch_pipes = should_stall_B && ~should_stall_A;
       // D.insn_A advances to X.insn_A
       // D.insn_B advances to D.insn_A so that it will be the "first" instruction advancing out of decode on the next cycle.
       // F.insn_A advances to D.insn_B.
       // o_cur_pc increases by one since only one instruction advanced out of decode.
-      // Execute, Memory, and Writeback instructions advance normally.     
+      // Execute, Memory, and Writeback instructions advance normally.   
 
-      //assign pc_A = should_switch_pipes ? pc_A_tmp : pc_A;
+      wire should_switch_pipes = superscalar_stall && ~should_stall_A;
       assign D_insn_A = should_switch_pipes ? D_insn_B_tmp : D_insn_A_tmp;
-      assign pc_A = should_switch_pipes ? pc_B : pc_A_tmp;
+      assign pc_A = should_switch_pipes ? pc_plus_one_A : pc_A_tmp;
 
       assign D_insn_B = should_switch_pipes ? i_cur_insn_A : D_insn_B_tmp;
-      assign pc_B = should_switch_pipes ? next_pc_A : pc_B_tmp;
+      assign pc_B = should_switch_pipes ? pc_plus_one_B : pc_plus_one_A;
+      
 
       lc4_decoder decA(  .insn(D_insn_A),
                         .r1sel(D_rs_rt_rd_A[8:6]), .r1re(D_bus_A[8]),
@@ -409,80 +407,54 @@ module lc4_processor(input wire         clk,             // main clock
       wire is_DA_to_DB_LTU = ((D_rd_B == D_rs_A && D_rs_re_A) || (D_rd_B == D_rt_A && D_rt_re_A && ~D_is_store_A) || (D_rd_B == D_rd_A && ~D_is_store_A));
       //wire is_XB_to_XA_LTU = (X_is_load_A && ((X_rd_A == X_rs_B && X_rs_re_B) || (X_rd_A == X_rt_B && X_rt_re_B && ~X_is_store_B)));
 
-      // (4) Structural hazard (both X.A and X.B access memory)
+      // (4) Structural hazard (both D.A and D.B access memory)
       wire is_structural_hazard = (D_is_load_A || D_is_store_A) && (D_is_load_B || D_is_store_B);
 
-      // if instruction X.A (the insn in the Decode stage in the A pipe) has a LTU dependence,
-      // insert a NOP into both pipes, and stall the fetch and decode stages. Record a load-to-use stall (stall = 3) in pipe A and a superscalar stall (stall = 1) in pipeline B.
+      // if instruction D.A (the insn in the Decode stage in the A pipe) has a LTU dependence,
       wire case1 = is_DA_LTU;
-      // always @ (is_XA_LTU) begin
-      //    //insert a NOP into both pipes, and stall the fetch and decode stages.
-      //    // stall_in_A = 2'b11;
-      //    // stall_in_B = 2'b01;
-      //    //Record a load-to-use stall (stall = 3) in pipe A and a superscalar stall (stall = 1) in pipeline B.
-      //    stall_x_A = X_stall_A == 2'b10 ? 2'b10 : 2'b11;
-      //    stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b01;
-      // end
+      // insert a NOP into both pipes, and stall the fetch and decode stages. Record a load-to-use stall (stall = 3) in pipe A and a superscalar stall (stall = 1) in pipeline B.
 
       // If instruction X.B has a LTU dependence, but does not have any dependencies on instruction X.A, and instruction X.A does not stall, 
-      // then stall pipeline B only (see Pipe Switching section below) and record a load-to-use stall in pipeline B.
       wire case2 = is_DB_LTU && ~is_DA_to_DB_LTU && ~is_DA_LTU;
-      // always @ (is_XB_LTU && ~is_XA_to_XB_LTU && ~is_XA_LTU) begin
-      //    //stall pipeline B only (see Pipe Switching section below)
-      //    //and record a load-to-use stall in pipeline B.
-      //    stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b11;
-      // end
-
+      // stall pipeline B only (see Pipe Switching section below) and record a load-to-use stall in pipeline B.
+   
       // If instruction X.B requires a value computed by X.A (including if X.A is a load), and instruction X.A does not stall, 
-      //then stall pipe B only (see Pipe Switching section), and record a superscalar stall in pipeline B.
       wire case3 = is_DA_to_DB_LTU && ~is_DA_LTU;
-      // always @ (is_XA_to_XB_LTU && ~is_XA_LTU) begin
-      //    //stall pipe B only (see Pipe Switching section), 
-      //    //and record a superscalar stall in pipeline B.
-      //    stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b01;
-      // end
+      // stall pipe B only (see Pipe Switching section), and record a superscalar stall in pipeline B.
 
       // If neither instruction has a load-to-use dependence, and instruction X.B does not depend on instruction X.A, 
-      // then both instructions advance normally.
       wire case4 = ~is_DB_LTU && ~is_DA_LTU && ~is_DA_to_DB_LTU;
-      // always @ (~is_XB_LTU && ~is_XA_LTU && ~is_XA_to_XB_LTU) begin
-      //    // both instructions advance normally.
-      //    //then both instructions advance normally
-      //    stall_x_A = X_stall_A == 2'b10 ? 2'b10 : 2'b00;
-      //    stall_x_B =  X_stall_B == 2'b10 ? 2'b10 : 2'b00;
-      // end
+      // both instructions advance normally.
 
       // If you have two independent instructions that interact with memory in the same stage (e.g., two loads, or a load and a store), 
-      // instruction X.B incurs a superscalar stall, since only one instruction can interact with memory at a time.
       wire case5 = ~is_DB_LTU && ~is_DA_LTU && ~is_DA_to_DB_LTU && is_structural_hazard;
-      // always @ (~is_XB_LTU && ~is_XA_LTU && ~is_XA_to_XB_LTU && is_structural_hazard) begin 
-      //    //instruction X.B incurs a superscalar stall, since only one instruction can interact with memory at a time.
-      //    // stall_in_B = 2'b01;
-      //    stall_x_B = X_stall_B == 2'b10 ? 2'b10 : 2'b01;
-      // end
-      // If you encounter a case where you could record either a superscalar or load-to-use stall, the superscalar stall takes precedence.
-      //wire [1:0] stall_x = X_stall_A == 2'b10 ? 2'b10 : (should_stall ? 2'b11 : (should_flush ? 2'b10 : 2'b00));
-      assign stall_x_A = X_stall_A == 2'b10 ? 2'b10 : (case1 ? 2'b11 : case4 ? 2'b00 : 2'b00);
-      assign stall_x_B = X_stall_A == 2'b10 ? 2'b10 : (case1 ? 2'b01 : (case2 ? 2'b11 : (case3 ? 2'b01 : (case4 ? 2'b00 : (case5 ? 2'b01 :  2'b00)))));
+      // instruction X.B incurs a superscalar stall, since only one instruction can interact with memory at a time.
+   
+
+      
+      assign superscalar_stall = stall_x_B == 2'b01;
+      assign should_stall_A = stall_x_A == 2'b11;
+      assign should_stall_B = stall_x_B == 2'b11;
 
       assign stall_in_A = should_flush_A ? 2'b10 : 2'b00;
+      assign stall_x_A = X_stall_A == 2'b10 ? 2'b10 : (case1 ? 2'b11 : 2'b00);
+
+      Nbit_reg #(2, 2'b10)   F_stall_regA(.in(stall_in_A),     .out(X_stall_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   D_stall_regA(.in(stall_x_A),     .out(M_stall_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   X_stall_regA(.in(M_stall_A),      .out(W_stall_A),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   M_stall_regA(.in(W_stall_A),     .out(stall_out_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+
       assign stall_in_B = should_flush_B ? 2'b10 : 2'b00;
-      assign should_stall_A = stall_x_A == 2'b11 || stall_x_A == 2'b01;
-      assign should_stall_B = stall_x_B == 2'b11 || stall_x_B == 2'b01;
+      assign stall_x_B = X_stall_B == 2'b10 ? 2'b10 : (case1 ? 2'b01 : (case2 ? 2'b11 : (case3 ? 2'b01 : (case4 ? 2'b00 : (case5 ? 2'b01 :  2'b00)))));
 
-
-      Nbit_reg #(2, 2'b10)   FD_stall_regA(.in(stall_in_A),     .out(X_stall_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   DX_stall_regA(.in(stall_x_A),     .out(M_stall_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   XM_stall_regA(.in(M_stall_A),      .out(W_stall_A),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   MW_stall_regA(.in(W_stall_A),     .out(stall_out_A),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-
-      Nbit_reg #(2, 2'b10)   FD_stall_regB(.in(stall_in_B),     .out(X_stall_B),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   DX_stall_regB(.in(stall_x_B),     .out(M_stall_B),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   XM_stall_regB(.in(M_stall_B),      .out(W_stall_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
-      Nbit_reg #(2, 2'b10)   MW_stall_regB(.in(W_stall_B),     .out(stall_out_B),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   F_stall_regB(.in(stall_in_B),     .out(X_stall_B),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   D_stall_regB(.in(stall_x_B),     .out(M_stall_B),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   X_stall_regB(.in(M_stall_B),      .out(W_stall_B),   .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
+      Nbit_reg #(2, 2'b10)   M_stall_regB(.in(W_stall_B),     .out(stall_out_B),    .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
 
       assign should_flush_A = 1'b0;//(M_is_branch_B && |(M_insn_B[11:9] & W_nzp_B)) || M_is_control_insn_B;
       assign should_flush_B = 1'b0;
+      
       assign rsdata_B = W_regfile_we_B && (W_rd_B == X_rs_B) ? W_dmem_data_B : regfile_rsdata_out_B;
       assign rtdata_B = W_regfile_we_B && (W_rd_B == X_rt_B) ? W_dmem_addr_B : regfile_rtdata_out_B;
 
@@ -512,8 +484,8 @@ module lc4_processor(input wire         clk,             // main clock
       assign rddata_A    = is_control_insn_A ? W_pc_A : (is_load_A ? dmem_data_out_A : alu_result_out_A);
       assign rddata_B    = is_control_insn_B ? W_pc_B : (is_load_B ? dmem_data_out_B : alu_result_out_B);
 
-      // assign next_pc_A = pc_plus_one_A; //should_flush_A ? alu_result_A : (should_stall_A ? pc_A : pc_plus_one_A); //assume the next pc is pc+1
-      // assign next_pc_B = pc_plus_one_B; //should_flush_B ? alu_result_B : (should_stall_B ? pc_B : pc_plus_one_B); //assume the next pc is pc+1
+      assign next_pc_A = pc_plus_two_A; //should_flush_A ? alu_result_A : (should_stall_A ? pc_A : pc_plus_one_A); //assume the next pc is pc+1
+      assign next_pc_B = pc_plus_two_B; //should_flush_B ? alu_result_B : (should_stall_B ? pc_B : pc_plus_one_B); //assume the next pc is pc+1
       
       
       
