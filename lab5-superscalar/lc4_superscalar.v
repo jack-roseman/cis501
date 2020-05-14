@@ -245,14 +245,14 @@ module lc4_processor(input wire         clk,             // main clock
       assign is_control_insn_B =      bus_out_B[0];
 
 
-      cla16 add_oneA(.a(pc_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_A)); //assume the next instruction for the current decoded insn is pc + 1
-      cla16 add_oneB(.a(pc_B), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_B)); //assume the next instruction for the current decoded insn is pc + 1
+      Nbit_reg #(16, 16'h8200)  pc_reg (.in(next_pc_A), .out(pc_A_tmp), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
       
+      cla16 add_oneA(.a(pc_A_tmp), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_A)); //assume the next instruction for the current decoded insn is pc + 1
+      cla16 add_oneB(.a(pc_plus_one_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_B)); //assume the next instruction for the current decoded insn is pc + 1
+
       cla16 add_oneA1(.a(pc_plus_one_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_A)); //assume the next instruction for the current decoded insn is pc + 1
       cla16 add_oneB2(.a(pc_plus_one_B), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_B)); //assume the next instruction for the current decoded insn is pc + 1
 
-
-      Nbit_reg #(16, 16'h8200)  pc_reg (.in(next_pc_A), .out(pc_A_tmp), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
 
       Nbit_reg #(16, 16'b0)     FD_insn_regA(.in(i_cur_insn_A), .out(D_insn_A_tmp),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)     FD_insn_regB(.in(i_cur_insn_B), .out(D_insn_B_tmp),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
