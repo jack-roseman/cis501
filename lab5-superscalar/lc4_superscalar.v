@@ -246,13 +246,11 @@ module lc4_processor(input wire         clk,             // main clock
 
 
       Nbit_reg #(16, 16'h8200)  pc_reg (.in(next_pc_A), .out(pc_A_tmp), .clk(clk), .we(1'b1),   .gwe(gwe), .rst(rst));
-      
+   
+
       cla16 add_oneA(.a(pc_A_tmp), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_A)); //assume the next instruction for the current decoded insn is pc + 1
-      cla16 add_oneB(.a(pc_plus_one_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_one_B)); //assume the next instruction for the current decoded insn is pc + 1
-
       cla16 add_oneA1(.a(pc_plus_one_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_A)); //assume the next instruction for the current decoded insn is pc + 1
-      cla16 add_oneB2(.a(pc_plus_one_B), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_B)); //assume the next instruction for the current decoded insn is pc + 1
-
+      cla16 add_oneB2(.a(pc_plus_two_A), .b(16'b0), .cin(1'b1), .sum(pc_plus_two_B)); //assume the next instruction for the current decoded insn is pc + 1
 
       Nbit_reg #(16, 16'b0)     FD_insn_regA(.in(i_cur_insn_A), .out(D_insn_A_tmp),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
       Nbit_reg #(16, 16'b0)     FD_insn_regB(.in(i_cur_insn_B), .out(D_insn_B_tmp),     .clk(clk), .we(1'b1), .gwe(gwe), .rst(rst));
@@ -268,8 +266,10 @@ module lc4_processor(input wire         clk,             // main clock
       assign pc_A = should_switch_pipes ? pc_plus_one_A : pc_A_tmp;
 
       assign D_insn_B = should_switch_pipes ? i_cur_insn_A : D_insn_B_tmp;
-      assign pc_B = should_switch_pipes ? pc_plus_one_B : pc_plus_one_A;
-      
+      assign pc_B = should_switch_pipes ? pc_plus_two_A : pc_plus_one_A;
+      assign next_pc_A = pc_plus_two_A;
+      assign next_pc_B = pc_plus_two_B;
+      assign o_cur_pc = should_switch_pipes ? pc_plus_two_A : pc_plus_one_A; //TODO THIS IS NOT RIGHT
 
       lc4_decoder decA(  .insn(D_insn_A),
                         .r1sel(D_rs_rt_rd_A[8:6]), .r1re(D_bus_A[8]),
@@ -484,8 +484,6 @@ module lc4_processor(input wire         clk,             // main clock
       assign rddata_A    = is_control_insn_A ? W_pc_A : (is_load_A ? dmem_data_out_A : alu_result_out_A);
       assign rddata_B    = is_control_insn_B ? W_pc_B : (is_load_B ? dmem_data_out_B : alu_result_out_B);
 
-      assign next_pc_A = pc_plus_two_A; //should_flush_A ? alu_result_A : (should_stall_A ? pc_A : pc_plus_one_A); //assume the next pc is pc+1
-      assign next_pc_B = pc_plus_two_B; //should_flush_B ? alu_result_B : (should_stall_B ? pc_B : pc_plus_one_B); //assume the next pc is pc+1
       
       
       
@@ -493,7 +491,6 @@ module lc4_processor(input wire         clk,             // main clock
       assign o_dmem_we = M_is_store_B;  // Data memory write enable
       assign o_dmem_addr = M_dmem_addr_B;        // Address to read/write from/to data memory; SET TO 0x0000 FOR NON LOAD/STORE INSNS
       assign o_dmem_towrite = M_dmem_data_B;
-      assign o_cur_pc = should_switch_pipes ? pc_B : pc_A; //TODO *******
       
 
 
